@@ -82,22 +82,33 @@ export default function Announcements() {
       const response = await fetch("/api/announcements", {
         method: "POST",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(newAnnouncement),
+        body: JSON.stringify({
+          title: newAnnouncement.title,
+          content: newAnnouncement.content,
+          category: newAnnouncement.category,
+          isImportant: newAnnouncement.isImportant,
+          expiresAt: newAnnouncement.expiresAt || null
+        }),
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to create announcement");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create announcement");
       }
 
-      const announcement = await response.json();
-
+      const createdAnnouncement = await response.json();
+      
       // Update announcements list while maintaining 5 items limit
       setAnnouncements((prev) => {
-        const updatedList = [announcement, ...prev];
-        // Only keep the first 5 announcements
+        const updatedList = [{
+          ...createdAnnouncement,
+          createdAt: createdAnnouncement.createdAt || new Date().toISOString(),
+          expiresAt: createdAnnouncement.expiresAt || null,
+          createdBy: createdAnnouncement.createdBy || { name: "Admin", role: "ADMIN" }
+        }, ...prev];
         return updatedList.slice(0, 5);
       });
 
@@ -108,11 +119,15 @@ export default function Announcements() {
         category: "INFO" as AnnouncementCategory,
         expiresAt: "",
       });
+      
       setIsCreateModalOpen(false);
       toast.success("Announcement created successfully");
+      
+      // Refresh the announcements list
+      await fetchAnnouncements();
     } catch (error) {
       console.error("Error creating announcement:", error);
-      toast.error("Failed to create announcement");
+      toast.error(error instanceof Error ? error.message : "Failed to create announcement");
     }
   };
 

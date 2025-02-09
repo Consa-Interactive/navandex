@@ -14,6 +14,24 @@ const nextConfig: NextConfig = {
         hostname: "*",
       },
     ],
+    domains: [
+      "navandex.fra1.cdn.digitaloceanspaces.com",
+      "navandex.fra1.digitaloceanspaces.com",
+      "hel1.your-objectstorage.com",
+    ],
+  },
+  async headers() {
+    return [
+      {
+        // Tüm API rotaları için
+        source: "/api/:path*",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Access-Control-Allow-Methods", value: "GET, POST, PUT, DELETE, OPTIONS" },
+          { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization" },
+        ],
+      },
+    ];
   },
 };
 

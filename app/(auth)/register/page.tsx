@@ -107,7 +107,7 @@ export default function RegisterPage() {
           <>
             <div className="text-center mb-8">
               <span className="flex justify-center mb-4">
-                <Image src="/logo.png" alt="asd" width={125} height={125} />
+                <Image src="/logo_dark.png" alt="NavandExpress" width={125} height={125} />
               </span>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Create Account</h2>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Join us and start shopping</p>

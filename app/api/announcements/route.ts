@@ -78,6 +78,14 @@ export async function POST(request: Request) {
           expiresAt: expiresAt ? new Date(expiresAt) : null,
           userId: parseInt(decoded.sub),
         },
+        include: {
+          createdBy: {
+            select: {
+              name: true,
+              role: true,
+            },
+          },
+        },
       });
 
       return NextResponse.json(announcement);

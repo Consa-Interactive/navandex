@@ -36,6 +36,8 @@ export default function LoginPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+          "Pragma": "no-cache"
         },
         body: JSON.stringify({
           ...formData,
@@ -53,8 +55,8 @@ export default function LoginPage() {
       await login(data.access_token);
       toast.success("Login successful!");
 
-      // Use router for navigation instead of window.location
-      router.push("/");
+      // Use router.replace with cache busting
+      router.replace("/?ts=" + new Date().getTime());
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to login");
     } finally {

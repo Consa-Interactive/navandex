@@ -60,6 +60,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const response = await fetch("/api/auth/me", {
         headers: {
           Authorization: `Bearer ${token}`,
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+          "Pragma": "no-cache"
         },
       });
 
@@ -72,9 +74,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return userData;
     } catch (error) {
       console.error("Error fetching user:", error);
-      Cookies.remove("token");
+      Cookies.remove("token", { path: "/" });
       setUser(null);
-      router.push("/login");
+      router.replace("/login?ts=" + new Date().getTime());
       throw error;
     }
   };
@@ -96,11 +98,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const login = async (token: string) => {
     try {
-      Cookies.set("token", token, { expires: 7, path: "/" });
+      // Set SameSite attribute for better mobile handling
+      Cookies.set("token", token, { 
+        expires: 7, 
+        path: "/",
+        sameSite: "Strict",
+        secure: window.location.protocol === "https:"
+      });
       await refreshUser();
     } catch (error) {
       console.error("Login error:", error);
-      Cookies.remove("token");
+      Cookies.remove("token", { path: "/" });
       setUser(null);
       throw error;
     }
@@ -110,7 +118,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     Cookies.remove("token", { path: "/" });
     setUser(null);
     setOrders([]);
-    router.push("/login");
+    router.replace("/login?ts=" + new Date().getTime());
   };
 
   const refreshUser = async () => {

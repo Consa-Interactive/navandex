@@ -9,6 +9,8 @@ export async function middleware(request: NextRequest) {
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Credentials": "true",
+    "Cache-Control": "no-store, no-cache, must-revalidate",
+    "Pragma": "no-cache"
   };
 
   // Handle preflight requests
@@ -44,6 +46,8 @@ export async function middleware(request: NextRequest) {
   if (!token) {
     // Redirect to login if trying to access protected route without token
     const response = NextResponse.redirect(new URL("/login", request.url));
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    response.headers.set("Pragma", "no-cache");
     Object.entries(corsHeaders).forEach(([key, value]) => {
       response.headers.set(key, value);
     });
@@ -61,7 +65,7 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set("x-user-role", payload.role as string);
     requestHeaders.set("x-user-phone", payload.phoneNumber as string);
 
-    // Add CORS headers
+    // Add CORS and cache control headers
     Object.entries(corsHeaders).forEach(([key, value]) => {
       requestHeaders.set(key, value);
     });
@@ -72,7 +76,7 @@ export async function middleware(request: NextRequest) {
       },
     });
 
-    // Add CORS headers to response
+    // Add headers to response
     Object.entries(corsHeaders).forEach(([key, value]) => {
       response.headers.set(key, value);
     });
@@ -82,6 +86,8 @@ export async function middleware(request: NextRequest) {
     // If token verification fails, clear it and redirect to login
     const response = NextResponse.redirect(new URL("/login", request.url));
     response.cookies.delete("token");
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    response.headers.set("Pragma", "no-cache");
     
     // Add CORS headers
     Object.entries(corsHeaders).forEach(([key, value]) => {

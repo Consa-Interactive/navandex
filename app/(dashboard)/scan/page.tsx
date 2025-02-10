@@ -132,17 +132,23 @@ export default function ScanPage() {
   }, [firstCustomerId]);
 
   // Validate barcode format
-  const validateBarcode = (code: string): boolean => {
-    if (!code.trim()) return false;
-    if (!/^\d+$/.test(code)) {
-      toast.error("Invalid order ID format - only numbers are allowed");
-      return false;
+  const validateBarcode = (code: string): { isValid: boolean; cleanedCode: string } => {
+    if (!code.trim()) return { isValid: false, cleanedCode: "" };
+    
+    // Extract only numbers from the barcode
+    const cleanedCode = code.replace(/[^0-9]/g, "");
+    
+    if (cleanedCode.length === 0) {
+      toast.error("Invalid order ID format - no numbers found");
+      return { isValid: false, cleanedCode: "" };
     }
-    if (code.length > 10) {
+    
+    if (cleanedCode.length > 10) {
       toast.error("Invalid order ID length");
-      return false;
+      return { isValid: false, cleanedCode: "" };
     }
-    return true;
+    
+    return { isValid: true, cleanedCode };
   };
 
   const handleBarcodeSubmit = async (e: React.FormEvent) => {
@@ -150,13 +156,14 @@ export default function ScanPage() {
     if (!barcode.trim() || loadingStates.scanning || !isOnline) return;
 
     // Validate barcode
-    if (!validateBarcode(barcode)) {
+    const { isValid, cleanedCode } = validateBarcode(barcode);
+    if (!isValid) {
       setBarcode("");
       return;
     }
 
     // Check for duplicate scans
-    if (processedBarcodes.has(barcode)) {
+    if (processedBarcodes.has(cleanedCode)) {
       toast.error("This barcode was recently processed");
       setBarcode("");
       return;
@@ -171,7 +178,7 @@ export default function ScanPage() {
         return;
       }
 
-      const response = await fetch(`/api/orders/${barcode}`, {
+      const response = await fetch(`/api/orders/${cleanedCode}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -205,8 +212,8 @@ export default function ScanPage() {
         setFirstCustomerId(order.userId);
         setScannedOrders([order]);
         toast.success(`Started new invoice`);
-        processedBarcodes.add(barcode);
-        setTimeout(() => processedBarcodes.delete(barcode), 5000);
+        processedBarcodes.add(cleanedCode);
+        setTimeout(() => processedBarcodes.delete(cleanedCode), 5000);
         return;
       }
 
@@ -219,8 +226,8 @@ export default function ScanPage() {
       // Add order to list
       setScannedOrders(prev => [...prev, order]);
       toast.success("Order added to list");
-      processedBarcodes.add(barcode);
-      setTimeout(() => processedBarcodes.delete(barcode), 5000);
+      processedBarcodes.add(cleanedCode);
+      setTimeout(() => processedBarcodes.delete(cleanedCode), 5000);
 
     } catch (error) {
       console.error("Error processing barcode:", error);

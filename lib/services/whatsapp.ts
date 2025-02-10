@@ -163,7 +163,9 @@ class MessageQueue {
   }
 }
 
+// Create singleton instance of message queue
 const messageQueue = new MessageQueue();
+export { messageQueue }; // Export for use in other files
 
 // Original message sending function becomes internal
 async function sendWhatsAppMessageInternal(orderId: number) {
@@ -219,5 +221,7 @@ async function sendWhatsAppMessageInternal(orderId: number) {
 
 // Public function now adds to queue instead of sending directly
 export async function sendWhatsAppMessage(orderId: number) {
-  await messageQueue.add(orderId);
+  // TODO: REMOVE THIS LATER
+  console.log(orderId);
+  // await messageQueue.add(orderId);
 }

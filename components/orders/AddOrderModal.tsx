@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import {
   X,
   Package,
-  User,
   CheckCircle2,
   Upload,
 } from "lucide-react";
@@ -53,7 +52,7 @@ export default function AddOrderModal({
         try {
           const token = Cookies.get("token");
           const response = await fetch(
-            `/api/users?role=CUSTOMER&search=${searchTerm}`,
+            `/api/users?search=${searchTerm}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
@@ -335,6 +334,56 @@ export default function AddOrderModal({
                       </div>
                     )}
                   </div>
+              
+              {/* Customer Info Section (Only for Admin/Worker) */}
+              {isAdminOrWorker && (
+                <div className="space-y-4">
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                      Search Customer
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full px-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                        placeholder="Search by name or phone number"
+                      />
+                      {isDropdownOpen && customers.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg">
+                          {customers.map((customer) => (
+                            <div
+                              key={customer.id}
+                              onClick={() => {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  customer: customer.id.toString(),
+                                }));
+                                setSearchTerm(
+                                  `${customer.name} (${customer.phoneNumber})`
+                                );
+                                setIsDropdownOpen(false);
+                              }}
+                              className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                            >
+                              <div>
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {customer.name}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  {customer.phoneNumber}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
                   {/* Product Link */}
                   <div className="space-y-2">
@@ -435,59 +484,7 @@ export default function AddOrderModal({
                 </div>
               </div>
 
-              {/* Customer Info Section (Only for Admin/Worker) */}
-              {isAdminOrWorker && (
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200 flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
-                    <User className="w-4 h-4" />
-                    Customer Information
-                  </h3>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                      Search Customer
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full px-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-                        placeholder="Search by name or phone number"
-                      />
-                      {isDropdownOpen && customers.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg">
-                          {customers.map((customer) => (
-                            <div
-                              key={customer.id}
-                              onClick={() => {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  customer: customer.id.toString(),
-                                }));
-                                setSearchTerm(
-                                  `${customer.name} (${customer.phoneNumber})`
-                                );
-                                setIsDropdownOpen(false);
-                              }}
-                              className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
-                            >
-                              <div>
-                                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                  {customer.name}
-                                </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  {customer.phoneNumber}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {error && (
                 <p className="text-sm text-red-500 dark:text-red-400">{error}</p>

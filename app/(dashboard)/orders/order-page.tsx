@@ -81,6 +81,7 @@ interface OrderItem {
   orderNumber: string;
   createdAt: Date;
   updatedAt: Date;
+  
   userId: number;
   prepaid: boolean;
   invoiceId: number | null;

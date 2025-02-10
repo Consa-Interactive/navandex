@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { Printer, Loader2 } from "lucide-react";
 import Image from "next/image";
 import Cookies from "js-cookie";
+import { QRCodeSVG } from 'qrcode.react';
 
 interface Order {
   id: string;
@@ -199,17 +200,36 @@ export default function InvoiceDetailsPage() {
 
               {/* Invoice Info */}
               <div className="text-right space-y-1">
-                <h2 className="font-bold text-sm sm:text-base print:hidden">
-                  Navand Express
-                </h2>
-                <p className="text-red-500 font-medium text-xs sm:text-sm">
-                  +964 750 3513232
-                </p>
-                <p className="text-xs sm:text-sm">Iraq, Erbil</p>
-                <p className="text-xs sm:text-sm">Erbil</p>
-                <p className="mt-2 sm:mt-4 text-xs sm:text-sm print:hidden">
-                  {new Date().toISOString().split("T")[0].replace(/-/g, ".")}
-                </p>
+                <div className="flex items-start justify-end gap-4">
+                  
+                  <div>
+                    <h2 className="font-bold text-sm sm:text-base">
+                      {invoice.user.name}
+                    </h2>
+                    <p className="text-red-500 font-medium text-xs sm:text-sm">
+                      {invoice.user.phoneNumber}
+                    </p>
+                    <p className="text-xs sm:text-sm">{invoice.user.address}</p>
+                    <p className="text-xs sm:text-sm">
+                      {new Date(invoice.date).toISOString().split("T")[0].replace(/-/g, ".")}
+                    </p>
+                  </div>
+
+                  <div >
+                    <QRCodeSVG
+                      value={`${process.env.NEXT_PUBLIC_WEBSITE_URL ?? "https://localhost:3000/"}`}
+                      size={100}
+                      level="L"
+                      imageSettings={{
+                        src: '/logo.png',
+                        height: 15,
+                        width: 15,
+                        excavate: true,
+                      }}
+                      includeMargin={true}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -248,7 +268,7 @@ export default function InvoiceDetailsPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="py-3 sm:py-4 text-center">
+                      <td className="py-3 sm:py-4 text-center print:hidden">
                         <span className="inline-flex px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-green-100 text-green-800">
                           {invoice.status}
                         </span>

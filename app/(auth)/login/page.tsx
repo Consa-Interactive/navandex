@@ -6,9 +6,11 @@ import Link from "next/link";
 import { useApp } from "@/providers/AppProvider";
 import Image from "next/image";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const { login } = useApp();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -51,11 +53,11 @@ export default function LoginPage() {
       await login(data.access_token);
       toast.success("Login successful!");
 
-      // Immediate navigation
-      document.cookie = "navigating=true; path=/";
-      window.location.replace("/");
+      // Use router for navigation instead of window.location
+      router.push("/");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to login");
+    } finally {
       setLoading(false);
     }
   };

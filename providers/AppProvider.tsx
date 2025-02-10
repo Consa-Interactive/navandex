@@ -74,6 +74,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.error("Error fetching user:", error);
       Cookies.remove("token");
       setUser(null);
+      router.push("/login");
       throw error;
     }
   };
@@ -93,13 +94,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = (token: string) => {
-    Cookies.set("token", token, { expires: 7 });
-    refreshUser();
+  const login = async (token: string) => {
+    try {
+      Cookies.set("token", token, { expires: 7, path: "/" });
+      await refreshUser();
+    } catch (error) {
+      console.error("Login error:", error);
+      Cookies.remove("token");
+      setUser(null);
+      throw error;
+    }
   };
 
   const logout = () => {
-    Cookies.remove("token");
+    Cookies.remove("token", { path: "/" });
     setUser(null);
     setOrders([]);
     router.push("/login");
@@ -108,6 +116,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const refreshUser = async () => {
     const token = Cookies.get("token");
     if (!token) {
+      setUser(null);
       setIsLoading(false);
       return;
     }
@@ -116,6 +125,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       await fetchUser(token);
     } catch (error) {
       console.error("Error refreshing user:", error);
+      setUser(null);
     } finally {
       setIsLoading(false);
     }

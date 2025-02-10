@@ -43,7 +43,11 @@ export async function middleware(request: NextRequest) {
   // Handle protected routes
   if (!token) {
     // Redirect to login if trying to access protected route without token
-    return NextResponse.redirect(new URL("/login", request.url));
+    const response = NextResponse.redirect(new URL("/login", request.url));
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
   }
 
   try {
@@ -62,11 +66,18 @@ export async function middleware(request: NextRequest) {
       requestHeaders.set(key, value);
     });
 
-    return NextResponse.next({
+    const response = NextResponse.next({
       request: {
         headers: requestHeaders,
       },
     });
+
+    // Add CORS headers to response
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+
+    return response;
   } catch {
     // If token verification fails, clear it and redirect to login
     const response = NextResponse.redirect(new URL("/login", request.url));

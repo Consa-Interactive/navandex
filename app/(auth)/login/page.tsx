@@ -33,7 +33,8 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/auth/login", {
+      // First attempt the login API call
+      const loginResponse = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -41,32 +42,36 @@ export default function LoginPage() {
           "Pragma": "no-cache"
         },
         body: JSON.stringify({
-          ...formData,
           phoneNumber: "+964" + formData.phoneNumber.replace(/^0+/, ""),
+          password: formData.password,
         }),
+        credentials: 'include'
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to login");
+      if (!loginResponse.ok) {
+        const errorData = await loginResponse.json();
+        throw new Error(errorData.error || "Failed to login");
       }
 
-      // First do the login to set up the auth state
-      await login(data.access_token);
+      const { access_token } = await loginResponse.json();
+      
+      // Then attempt to set up the authentication state
+      await login(access_token);
 
-      // Then show success animation
+      // Show success state
       setShowSuccess(true);
       toast.success("Login successful!");
 
-      // Wait for animation to complete before redirecting
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Wait for animation
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Use window.location for a full page navigation
-      window.location.href = "/";
+      // Perform a full page reload to the dashboard
+      window.location.href = "/?ts=" + new Date().getTime();
     } catch (err) {
+      console.error("Login error:", err);
       setShowSuccess(false);
       toast.error(err instanceof Error ? err.message : "Failed to login");
+    } finally {
       setLoading(false);
     }
   };
@@ -188,7 +193,22 @@ export default function LoginPage() {
                 disabled={loading}
                 className="w-full py-2.5 px-4 text-sm font-medium text-white bg-primary hover:bg-primary-dark active:bg-primary-darker rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
-                {loading ? "Logging in..." : "Login"}
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <motion.span
+                      animate={{ rotate: 360 }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
+                      className="inline-block w-4 h-4 border-2 border-white/20 border-t-white rounded-full"
+                    />
+                    Logging in...
+                  </span>
+                ) : (
+                  "Login"
+                )}
               </button>
 
               <p className="text-center text-sm text-gray-500 dark:text-gray-400">

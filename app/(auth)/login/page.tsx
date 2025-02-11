@@ -6,13 +6,11 @@ import Link from "next/link";
 import { useApp } from "@/providers/AppProvider";
 import Image from "next/image";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";
 
 export default function LoginPage() {
   const { login } = useApp();
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -54,28 +52,22 @@ export default function LoginPage() {
         throw new Error(data.error || "Failed to login");
       }
 
-      // First set success state and show toast
+      // First do the login to set up the auth state
+      await login(data.access_token);
+
+      // Then show success animation
       setShowSuccess(true);
       toast.success("Login successful!");
 
-      // Wait a bit before starting the login process
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Then do the login
-      await login(data.access_token);
-
       // Wait for animation to complete before redirecting
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Finally redirect
-      router.replace("/?ts=" + new Date().getTime());
+      // Use window.location for a full page navigation
+      window.location.href = "/";
     } catch (err) {
       setShowSuccess(false);
       toast.error(err instanceof Error ? err.message : "Failed to login");
-    } finally {
-      if (!showSuccess) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 

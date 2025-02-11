@@ -7,12 +7,15 @@ import { useApp } from "@/providers/AppProvider";
 import Image from "next/image";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { CheckCircle2 } from "lucide-react";
 
 export default function LoginPage() {
   const { login } = useApp();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState({
     phoneNumber: "",
     password: "",
@@ -53,10 +56,13 @@ export default function LoginPage() {
 
       // Login and show success message
       await login(data.access_token);
+      setShowSuccess(true);
       toast.success("Login successful!");
 
-      // Use router.replace with cache busting
-      router.replace("/?ts=" + new Date().getTime());
+      // Wait for animation before redirecting
+      setTimeout(() => {
+        router.replace("/?ts=" + new Date().getTime());
+      }, 1500);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to login");
     } finally {
@@ -70,98 +76,132 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <span className="flex justify-center">
-            <Image 
-              src="/logo_dark.png" 
-              alt="NavandExpress" 
-              width={125} 
-              height={125}
-              priority
-            />
-          </span>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <label
-              htmlFor="phoneNumber"
-              className="text-sm font-medium text-gray-700 dark:text-gray-200"
-            >
-              Phone Number
-            </label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
-                +964
-              </span>
-              <input
-                id="phoneNumber"
-                type="tel"
-                required
-                value={formData.phoneNumber}
-                onChange={(e) => {
-                  const value = e.target.value
-                    .replace(/[^0-9]/g, "")
-                    .replace(/^0+/, "");
-                  setFormData({ ...formData, phoneNumber: value });
-                }}
-                className={inputClassName + " pl-16"}
-                placeholder="750 XXX XXXX"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label
-              htmlFor="password"
-              className="text-sm font-medium text-gray-700 dark:text-gray-200"
-            >
-              Password
-            </label>
-            <div className="relative">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                required
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                className={inputClassName}
-                placeholder="Enter your password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                {showPassword ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2.5 px-4 text-sm font-medium text-white bg-primary hover:bg-primary-dark active:bg-primary-darker rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+        {showSuccess ? (
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-center space-y-4"
           >
-            {loading ? "Logging in..." : "Login"}
-          </button>
-
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/register"
-              className="font-medium text-primary hover:text-primary-dark transition-colors duration-200"
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
             >
-              Register
-            </Link>
-          </p>
-        </form>
+              <CheckCircle2 className="w-20 h-20 text-primary mx-auto" />
+            </motion.div>
+            <motion.h2
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="text-2xl font-bold text-gray-900 dark:text-white"
+            >
+              Login Successful!
+            </motion.h2>
+            <motion.p
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="text-gray-500 dark:text-gray-400"
+            >
+              Redirecting to dashboard...
+            </motion.p>
+          </motion.div>
+        ) : (
+          <>
+            <div className="text-center mb-8">
+              <span className="flex justify-center">
+                <Image 
+                  src="/logo_dark.png" 
+                  alt="NavandExpress" 
+                  width={125} 
+                  height={125}
+                  priority
+                />
+              </span>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label
+                  htmlFor="phoneNumber"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-200"
+                >
+                  Phone Number
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
+                    +964
+                  </span>
+                  <input
+                    id="phoneNumber"
+                    type="tel"
+                    required
+                    value={formData.phoneNumber}
+                    onChange={(e) => {
+                      const value = e.target.value
+                        .replace(/[^0-9]/g, "")
+                        .replace(/^0+/, "");
+                      setFormData({ ...formData, phoneNumber: value });
+                    }}
+                    className={inputClassName + " pl-16"}
+                    placeholder="750 XXX XXXX"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="password"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-200"
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    className={inputClassName}
+                    placeholder="Enter your password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-2.5 px-4 text-sm font-medium text-white bg-primary hover:bg-primary-dark active:bg-primary-darker rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              >
+                {loading ? "Logging in..." : "Login"}
+              </button>
+
+              <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+                Don&apos;t have an account?{" "}
+                <Link
+                  href="/register"
+                  className="font-medium text-primary hover:text-primary-dark transition-colors duration-200"
+                >
+                  Register
+                </Link>
+              </p>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );

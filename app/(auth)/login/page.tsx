@@ -54,19 +54,28 @@ export default function LoginPage() {
         throw new Error(data.error || "Failed to login");
       }
 
-      // Login and show success message
-      await login(data.access_token);
+      // First set success state and show toast
       setShowSuccess(true);
       toast.success("Login successful!");
 
-      // Wait for animation before redirecting
-      setTimeout(() => {
-        router.replace("/?ts=" + new Date().getTime());
-      }, 1500);
+      // Wait a bit before starting the login process
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Then do the login
+      await login(data.access_token);
+
+      // Wait for animation to complete before redirecting
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Finally redirect
+      router.replace("/?ts=" + new Date().getTime());
     } catch (err) {
+      setShowSuccess(false);
       toast.error(err instanceof Error ? err.message : "Failed to login");
     } finally {
-      setLoading(false);
+      if (!showSuccess) {
+        setLoading(false);
+      }
     }
   };
 

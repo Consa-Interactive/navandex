@@ -190,8 +190,10 @@ export default function InvoiceDetailsPage() {
                   <h2 className="font-bold">
                     {process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Navand Express"}
                   </h2>
-                  <div className="text-sm space-y-0.5">
-                    <p>{process.env.NEXT_PUBLIC_COMPANY_PHONE ?? ""}</p>
+                  <div className="text-sm space-y-0.5 font-semibold">
+                    {JSON.parse(process.env.NEXT_PUBLIC_COMPANY_PHONE ?? "[]").map((phone: string, index: number) => (
+                      <p key={index}>{phone}</p>
+                    ))}
                     <p>{process.env.NEXT_PUBLIC_COMPANY_CITY ?? ""}</p>
                     <p>{process.env.NEXT_PUBLIC_COMPANY_ADDRESS ?? ""}</p>
                   </div>

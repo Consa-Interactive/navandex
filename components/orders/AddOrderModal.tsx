@@ -28,7 +28,8 @@ export default function AddOrderModal({
   const [showSuccess, setShowSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [customers, setCustomers] = useState<
     Array<{ id: number; name: string; phoneNumber: string }>
@@ -97,12 +98,20 @@ export default function AddOrderModal({
               title: data.title,
             }));
           }
+          // Set image preview with fallback to logo
           if (data.images && data.images.length > 0) {
-            setUploadedImage(data.images[0]);
+            setImagePreview(data.images[0]);
+          } else {
+            setImagePreview("/logo.png");
           }
+        } else {
+          // Use default logo if scraping fails
+          setImagePreview("/logo.png");
         }
       } catch (error) {
         console.error("Error scraping product:", error);
+        // Use default logo on error
+        setImagePreview("/logo.png");
       } finally {
         setIsScrapingLoading(false);
       }
@@ -141,25 +150,13 @@ export default function AddOrderModal({
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
       if (file.type.includes("image")) {
-        try {
-          const formData = new FormData();
-          formData.append("file", file);
-
-          const response = await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
-          });
-
-          if (!response.ok) {
-            throw new Error("Failed to upload image");
-          }
-
-          const data = await response.json();
-          setUploadedImage(data.url);
-        } catch (error) {
-          console.error("Upload error:", error);
-          setError("Failed to upload image");
-        }
+        setSelectedImage(file);
+        const preview = URL.createObjectURL(file);
+        setImagePreview(preview);
+      } else {
+        // Use default logo for invalid file types
+        setSelectedImage(null);
+        setImagePreview("/logo.png");
       }
     }
   };
@@ -167,24 +164,14 @@ export default function AddOrderModal({
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const response = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to upload image");
-        }
-
-        const data = await response.json();
-        setUploadedImage(data.url);
-      } catch (error) {
-        console.error("Upload error:", error);
-        setError("Failed to upload image");
+      if (file.type.includes("image")) {
+        setSelectedImage(file);
+        const preview = URL.createObjectURL(file);
+        setImagePreview(preview);
+      } else {
+        // Use default logo for invalid file types
+        setSelectedImage(null);
+        setImagePreview("/logo.png");
       }
     }
   };
@@ -201,6 +188,33 @@ export default function AddOrderModal({
     setError(null);
 
     try {
+      let imageUrl = "";
+      
+      // Upload image if one is selected
+      if (selectedImage) {
+        const formData = new FormData();
+        formData.append("file", selectedImage);
+
+        const uploadResponse = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          // Use default logo URL if upload fails
+          imageUrl = "/logo.png";
+        } else {
+          const uploadData = await uploadResponse.json();
+          imageUrl = uploadData.url;
+        }
+      } else if (imagePreview === "/logo.png") {
+        // Use logo URL if it was set as preview
+        imageUrl = "/logo.png";
+      } else if (imagePreview) {
+        // Use scraped image URL
+        imageUrl = imagePreview;
+      }
+
       const token = Cookies.get("token");
       const response = await fetch("/api/orders", {
         method: "POST",
@@ -215,7 +229,7 @@ export default function AddOrderModal({
           color: formData.color || "",
           quantity: Number(formData.quantity) || 1,
           notes: formData.notes || "",
-          imageUrl: uploadedImage || "",
+          imageUrl: imageUrl,
           userId: isAdminOrWorker ? Number(formData.customer) : user?.id,
         }),
       });
@@ -297,17 +311,20 @@ export default function AddOrderModal({
                     onDragOver={handleDrag}
                     onDrop={handleDrop}
                   >
-                    {uploadedImage ? (
+                    {imagePreview ? (
                       <div className="relative w-full aspect-video rounded-lg overflow-hidden">
                         <Image
-                          src={uploadedImage}
+                          src={imagePreview}
                           alt="Product"
                           fill
                           className="object-cover"
                         />
                         <button
                           type="button"
-                          onClick={() => setUploadedImage(null)}
+                          onClick={() => {
+                            setSelectedImage(null);
+                            setImagePreview(null);
+                          }}
                           className="absolute top-2 right-2 p-1 rounded-full bg-white/80 hover:bg-white text-gray-600"
                         >
                           <X className="w-4 h-4" />

@@ -428,7 +428,7 @@ const MobileOrderCard = ({
             <span className="font-mono text-sm text-gray-500">#{order.id}</span>
           </div>
           <div
-            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm ${
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-bold ${
               statusColors[order.status as keyof typeof statusColors]?.bg
             } ${statusColors[order.status as keyof typeof statusColors]?.text}`}
           >
@@ -476,7 +476,7 @@ const MobileOrderCard = ({
               rel="noopener noreferrer"
               className="line-clamp-1 font-medium text-gray-900 hover:text-primary dark:text-white dark:hover:text-primary"
             >
-              {order.title}
+              {order.title?.trim() ? order.title : `Order-${order.id}`}
             </a>
             <div className="flex flex-wrap gap-1">
               {order.size && (
@@ -826,14 +826,32 @@ export default function OrdersPage() {
               <Package className="h-5 w-5 text-gray-400" />
             </div>
           )}
-          <a
-            href={info.row.original.productLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="line-clamp-1 flex-1 text-sm font-medium text-gray-900 hover:text-primary dark:text-white dark:hover:text-primary"
-          >
-            {info.getValue()}
-          </a>
+          <div className="flex flex-col gap-1">
+            <a
+              href={info.row.original.productLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="line-clamp-1 flex-1 text-sm font-medium text-gray-900 hover:text-primary dark:text-white dark:hover:text-primary"
+            >
+              {info.getValue()?.trim() ? info.getValue() : `Order-${info.row.original.id}`}
+            </a>
+
+            <div className="flex flex-wrap gap-1">
+              {info.row.original.size && (
+                <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                  Size: {info.row.original.size}
+                </span>
+              )}
+              {info.row.original.color && (
+                <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                  Color: {info.row.original.color}
+                </span>
+              )}
+              <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                Qty: {info.row.original.quantity}
+              </span>
+            </div>
+          </div>
         </div>
       ),
     }),

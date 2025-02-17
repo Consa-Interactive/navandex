@@ -197,14 +197,14 @@ async function sendWhatsAppMessageInternal(orderId: number) {
     },
     body: JSON.stringify({
       messaging_product: "whatsapp",
-      to: "9647503602328",
+      to: "84766659861",
       type: "template",
       template: {
-        name: template.templateName,
+        name: "hello_world",
         language: {
           code: "en",
         },
-        ...template.getComponents(order as OrderWithUser),
+        // ...template.getComponents(order as OrderWithUser),
       },
     }),
   });
@@ -223,5 +223,5 @@ async function sendWhatsAppMessageInternal(orderId: number) {
 export async function sendWhatsAppMessage(orderId: number) {
   // TODO: REMOVE THIS LATER
   console.log(orderId);
-  // await messageQueue.add(orderId);
+  await messageQueue.add(orderId);
 }

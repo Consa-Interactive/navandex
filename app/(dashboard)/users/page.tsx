@@ -73,6 +73,9 @@ export default function UsersPage() {
   const [globalFilter, setGlobalFilter] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize] = useState(10);
   const { user } = useApp();
   const router = useRouter();
 
@@ -84,15 +87,22 @@ export default function UsersPage() {
         throw new Error("No authentication token found");
       }
 
-      const response = await fetch("/api/users", {
+      const queryParams = new URLSearchParams({
+        page: pageIndex.toString(),
+        limit: pageSize.toString(),
+        ...(globalFilter ? { search: globalFilter } : {}),
+      });
+
+      const response = await fetch(`/api/users?${queryParams.toString()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setData(data.users || []);
+        const { users, total } = await response.json();
+        setData(users);
+        setTotalUsers(total);
       } else if (response.status === 401) {
         router.push("/login");
       }
@@ -101,7 +111,7 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, pageIndex, pageSize, globalFilter]);
 
   useEffect(() => {
     if (!user) {
@@ -116,6 +126,16 @@ export default function UsersPage() {
 
     refreshUsers();
   }, [user, router, refreshUsers]);
+
+  // Debounce global filter changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPageIndex(0); // Reset to first page when filtering
+      refreshUsers();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [globalFilter, refreshUsers]);
 
   const columns = [
     columnHelper.accessor("name", {
@@ -259,22 +279,33 @@ export default function UsersPage() {
   ];
 
   const table = useReactTable({
-    data: data,
+    data,
     columns,
     state: {
       sorting,
       globalFilter,
       pagination: {
-        pageSize: 25,
-        pageIndex: 0,
+        pageIndex,
+        pageSize,
       },
     },
     onSortingChange: setSorting as OnChangeFn<SortingState>,
     onGlobalFilterChange: setGlobalFilter,
+    onPaginationChange: (updater) => {
+      if (typeof updater === 'function') {
+        const newState = updater({
+          pageIndex,
+          pageSize,
+        });
+        setPageIndex(newState.pageIndex);
+      }
+    },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true,
+    pageCount: Math.ceil(totalUsers / pageSize),
   });
 
   // Mobile card view component
@@ -539,7 +570,7 @@ export default function UsersPage() {
 
           {/* Pagination */}
           <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800 sm:px-6">
-            <div className="flex flex-1 items-center justify-between sm:hidden">
+            <div className="flex flex-1 justify-between sm:hidden">
               <button
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
@@ -556,74 +587,50 @@ export default function UsersPage() {
               </button>
             </div>
             <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-              <div className="flex items-baseline gap-4">
-                <span className="text-sm text-gray-700 dark:text-gray-200">
-                  Showing{" "}
+              <div>
+                <p className="text-sm text-gray-700 dark:text-gray-200">
+                  Showing <span className="font-medium">{table.getState().pagination.pageIndex * 10 + 1}</span> to{' '}
                   <span className="font-medium">
-                    {table.getState().pagination.pageIndex * 25 + 1}
-                  </span>{" "}
-                  to{" "}
-                  <span className="font-medium">
-                    {Math.min(
-                      (table.getState().pagination.pageIndex + 1) * 25,
-                      table.getFilteredRowModel().rows.length
-                    )}
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-medium">
-                    {table.getFilteredRowModel().rows.length}
-                  </span>{" "}
-                  results
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-700 dark:text-gray-200">
-                    Show
-                  </span>
-                  <select
-                    value={25}
-                    onChange={(e) => table.setPageSize(Number(e.target.value))}
-                    className="block w-full rounded-xl border border-gray-300 bg-white p-2 text-sm text-gray-900 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                  >
-                    {[25, 50, 75, 100].map((size) => (
-                      <option key={size} value={size}>
-                        {size}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="text-sm text-gray-700 dark:text-gray-200">
-                    entries
-                  </span>
-                </div>
+                    {Math.min((table.getState().pagination.pageIndex + 1) * 10, data.length)}
+                  </span>{' '}
+                  of <span className="font-medium">{data.length}</span> results
+                </p>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => table.setPageIndex(0)}
-                  disabled={!table.getCanPreviousPage()}
-                  className="relative inline-flex items-center rounded-xl border border-gray-300 bg-white p-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                >
-                  <ChevronsLeft className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => table.previousPage()}
-                  disabled={!table.getCanPreviousPage()}
-                  className="relative inline-flex items-center rounded-xl border border-gray-300 bg-white p-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}
-                  className="relative inline-flex items-center rounded-xl border border-gray-300 bg-white p-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                  disabled={!table.getCanNextPage()}
-                  className="relative inline-flex items-center rounded-xl border border-gray-300 bg-white p-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                >
-                  <ChevronsRight className="h-5 w-5" />
-                </button>
+              <div>
+                <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                  <button
+                    onClick={() => table.setPageIndex(0)}
+                    disabled={!table.getCanPreviousPage()}
+                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:ring-gray-600 dark:hover:bg-gray-700"
+                  >
+                    <span className="sr-only">First</span>
+                    <ChevronsLeft className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                    className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:ring-gray-600 dark:hover:bg-gray-700"
+                  >
+                    <span className="sr-only">Previous</span>
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                    className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:ring-gray-600 dark:hover:bg-gray-700"
+                  >
+                    <span className="sr-only">Next</span>
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                    disabled={!table.getCanNextPage()}
+                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:ring-gray-600 dark:hover:bg-gray-700"
+                  >
+                    <span className="sr-only">Last</span>
+                    <ChevronsRight className="h-5 w-5" />
+                  </button>
+                </nav>
               </div>
             </div>
           </div>

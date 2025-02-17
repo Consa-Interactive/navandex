@@ -99,6 +99,12 @@ export async function PUT(
         ...(localShippingPrice !== undefined && { localShippingPrice: Number(localShippingPrice) }),
         ...(orderNumber && { orderNumber }),
         ...(prepaid !== undefined && { prepaid }),
+        ...(body.imageUrl !== undefined && { imageUrl: body.imageUrl }),
+        ...(body.title !== undefined && { title: body.title }),
+        ...(body.size !== undefined && { size: body.size }),
+        ...(body.color !== undefined && { color: body.color }),
+        ...(body.notes !== undefined && { notes: body.notes }),
+        ...(body.productLink !== undefined && { productLink: body.productLink }),
         statusHistory: {
           create: {
             status: status || "PENDING",

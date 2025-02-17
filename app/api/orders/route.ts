@@ -90,16 +90,32 @@ export async function POST(request: Request) {
       userId = parseInt(decoded.sub);
     }
 
-    const fetchScraper = async () => {
-      const response = await scrapeProductPage(body.productLink);
-      return response;
-    };
+    // Initialize default values
+    let scrapedTitle: string | undefined;
+    let scrapedImage: string | undefined;
 
-    const scraperData = await fetchScraper();
+    // Try to scrape product data if link is provided
+    try {
+      if (body.productLink) {
+        const scraperData = await scrapeProductPage(body.productLink);
+        scrapedTitle = scraperData.title;
+        scrapedImage = scraperData.image;
+      }
+    } catch (error) {
+      console.error("Error scraping product:", error);
+      // Continue with undefined scraper data
+    }
+    
+    // Get total order count for default title
+    const totalOrders = await prisma.order.count();
+
+    // Ensure we have valid values for title and image
+    const title = body.title || scrapedTitle || `Order-${totalOrders + 1}`;
+    const imageUrl = body.imageUrl || scrapedImage || "/logo.png";
 
     const order = await prisma.order.create({
       data: {
-        title: scraperData.title || "Order-" + prisma.order.count.toString(),
+        title,
         size: body.size || "N/A",
         color: body.color || "N/A",
         quantity: Number(body.quantity) || 1,
@@ -108,7 +124,7 @@ export async function POST(request: Request) {
         localShippingPrice: Number(body.localShippingPrice) || 0,
         status: "PENDING",
         productLink: body.productLink || "",
-        imageUrl: body.imageUrl || scraperData.image,
+        imageUrl,
         notes: body.notes || "",
         userId: userId,
       },

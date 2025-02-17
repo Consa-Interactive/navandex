@@ -75,7 +75,7 @@ export default function UsersPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [totalUsers, setTotalUsers] = useState(0);
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
   const { user } = useApp();
   const router = useRouter();
 
@@ -298,6 +298,7 @@ export default function UsersPage() {
           pageSize,
         });
         setPageIndex(newState.pageIndex);
+        setPageSize(newState.pageSize);
       }
     },
     getCoreRowModel: getCoreRowModel(),

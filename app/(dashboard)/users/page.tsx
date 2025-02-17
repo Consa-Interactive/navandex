@@ -9,7 +9,6 @@ import {
   getPaginationRowModel,
   createColumnHelper,
   flexRender,
-  OnChangeFn,
   SortingState,
 } from "@tanstack/react-table";
 import {
@@ -25,7 +24,6 @@ import {
   Plus,
   MoreVertical,
 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
 import UserEditModal from "@/components/users/UserEditModal";
 import { useApp } from "@/providers/AppProvider";
@@ -75,11 +73,11 @@ export default function UsersPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [totalUsers, setTotalUsers] = useState(0);
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(3);
   const { user } = useApp();
   const router = useRouter();
 
-  const refreshUsers = useCallback(async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const token = Cookies.get("token");
@@ -124,18 +122,30 @@ export default function UsersPage() {
       return;
     }
 
-    refreshUsers();
-  }, [user, router, refreshUsers]);
+    fetchUsers();
+  }, [user, router, fetchUsers]);
 
   // Debounce global filter changes
   useEffect(() => {
     const timer = setTimeout(() => {
       setPageIndex(0); // Reset to first page when filtering
-      refreshUsers();
+      fetchUsers();
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [globalFilter, refreshUsers]);
+  }, [globalFilter]);
+
+  // Handle pagination changes
+  const handlePageChange = (newPageIndex: number) => {
+    setPageIndex(newPageIndex);
+    fetchUsers();
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setPageIndex(0);
+    fetchUsers();
+  };
 
   const columns = [
     columnHelper.accessor("name", {
@@ -281,6 +291,12 @@ export default function UsersPage() {
   const table = useReactTable({
     data,
     columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
     state: {
       sorting,
       globalFilter,
@@ -289,22 +305,6 @@ export default function UsersPage() {
         pageSize,
       },
     },
-    onSortingChange: setSorting as OnChangeFn<SortingState>,
-    onGlobalFilterChange: setGlobalFilter,
-    onPaginationChange: (updater) => {
-      if (typeof updater === 'function') {
-        const newState = updater({
-          pageIndex,
-          pageSize,
-        });
-        setPageIndex(newState.pageIndex);
-        setPageSize(newState.pageSize);
-      }
-    },
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     manualPagination: true,
     pageCount: Math.ceil(totalUsers / pageSize),
   });
@@ -382,256 +382,166 @@ export default function UsersPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4 p-4 md:p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <Skeleton className="h-8 w-32" />
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-10 w-[300px]" />
-            <Skeleton className="h-10 w-24" />
-          </div>
-        </div>
-
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-800/50">
-                <tr>
-                  {[
-                    "Name",
-                    "Role",
-                    "Status",
-                    "Location",
-                    "Phone",
-                    "Join Date",
-                    "",
-                  ].map((header, index) => (
-                    <th key={index} className="px-4 py-3.5">
-                      <Skeleton className="h-4 w-20" />
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {Array.from({ length: 10 }).map((_, rowIndex) => (
-                  <tr key={rowIndex}>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <Skeleton className="h-10 w-10 rounded-full" />
-                        <div className="space-y-1">
-                          <Skeleton className="h-4 w-32" />
-                          <Skeleton className="h-3 w-40" />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <Skeleton className="h-6 w-20 rounded-full" />
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <Skeleton className="h-6 w-20 rounded-full" />
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Skeleton className="h-4 w-4" />
-                        <Skeleton className="h-4 w-24" />
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Skeleton className="h-4 w-4" />
-                        <Skeleton className="h-4 w-24" />
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <Skeleton className="h-4 w-24" />
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <Skeleton className="h-8 w-8 rounded-xl" />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 dark:border-gray-700 sm:px-6">
-            <div className="flex flex-1 items-center justify-between sm:hidden">
-              <Skeleton className="h-9 w-24" />
-              <Skeleton className="h-9 w-24" />
-            </div>
-            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-              <div className="flex items-baseline gap-4">
-                <Skeleton className="h-5 w-72" />
-                <div className="flex items-center gap-2">
-                  <Skeleton className="h-5 w-10" />
-                  <Skeleton className="h-9 w-20" />
-                  <Skeleton className="h-5 w-14" />
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Skeleton className="h-9 w-9" />
-                <Skeleton className="h-9 w-9" />
-                <Skeleton className="h-9 w-9" />
-                <Skeleton className="h-9 w-9" />
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 p-4 md:p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          Users
-        </h1>
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 sm:min-w-[300px]">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search users..."
-              value={globalFilter}
-              onChange={(e) => setGlobalFilter(e.target.value)}
-              className="w-full rounded-xl border border-gray-300 bg-white px-10 py-2 text-sm text-gray-900 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-orange-500"
-            />
+    <div className="min-h-screen pb-24">
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="sm:flex sm:items-center">
+          <div className="sm:flex-auto">
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Users
+            </h1>
+            <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+              A list of all users in the system
+            </p>
           </div>
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-orange-600/90 active:bg-primary/95"
-          >
-            <Plus className="h-4 w-4" />
-            Add User
-          </button>
-          <button className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
-            <Filter className="h-4 w-4" />
-            Filter
-          </button>
         </div>
-      </div>
 
-      {/* Mobile View */}
-      <div className="grid grid-cols-1 gap-4 lg:hidden">
-        {table.getRowModel().rows.map((row) => (
-          <UserCard key={row.original.id} user={row.original} />
-        ))}
-      </div>
-
-      {/* Desktop View */}
-      <div className="hidden lg:block">
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <th
-                        key={header.id}
-                        scope="col"
-                        className="bg-gray-50 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:bg-gray-900/50 dark:text-gray-400"
-                      >
-                        {header.isPlaceholder ? null : (
-                          <div
-                            className="inline-flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer"
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                            <ArrowUpDown className="h-4 w-4 opacity-50" />
-                          </div>
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
-                {table.getRowModel().rows.map((row) => (
-                  <tr
-                    key={row.id}
-                    className="group transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="whitespace-nowrap px-6 py-4">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800 sm:px-6">
-            <div className="flex flex-1 justify-between sm:hidden">
+        <div className="mt-8 flow-root">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 sm:min-w-[300px]">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={globalFilter}
+                  onChange={(e) => setGlobalFilter(e.target.value)}
+                  className="w-full rounded-xl border border-gray-300 bg-white px-10 py-2 text-sm text-gray-900 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-orange-500"
+                />
+              </div>
               <button
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-                className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-orange-600/90 active:bg-primary/95"
               >
-                Previous
+                <Plus className="h-4 w-4" />
+                Add User
               </button>
-              <button
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-                className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
-              >
-                Next
+              <button className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
+                <Filter className="h-4 w-4" />
+                Filter
               </button>
             </div>
-            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-gray-700 dark:text-gray-200">
-                  Showing <span className="font-medium">{table.getState().pagination.pageIndex * 10 + 1}</span> to{' '}
-                  <span className="font-medium">
-                    {Math.min((table.getState().pagination.pageIndex + 1) * 10, data.length)}
-                  </span>{' '}
-                  of <span className="font-medium">{data.length}</span> results
-                </p>
+          </div>
+
+          {/* Mobile View */}
+          <div className="grid grid-cols-1 gap-4 lg:hidden">
+            {table.getRowModel().rows.map((row) => (
+              <UserCard key={row.original.id} user={row.original} />
+            ))}
+          </div>
+
+          {/* Desktop View */}
+          <div className="hidden lg:block">
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <tr key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => (
+                          <th
+                            key={header.id}
+                            scope="col"
+                            className="bg-gray-50 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:bg-gray-900/50 dark:text-gray-400"
+                          >
+                            {header.isPlaceholder ? null : (
+                              <div
+                                className="inline-flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer"
+                                onClick={header.column.getToggleSortingHandler()}
+                              >
+                                {flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                                <ArrowUpDown className="h-4 w-4 opacity-50" />
+                              </div>
+                            )}
+                          </th>
+                        ))}
+                      </tr>
+                    ))}
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
+                    {table.getRowModel().rows.map((row) => (
+                      <tr
+                        key={row.id}
+                        className="group transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <td key={cell.id} className="whitespace-nowrap px-6 py-4">
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              <div>
-                <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                  <button
-                    onClick={() => table.setPageIndex(0)}
-                    disabled={!table.getCanPreviousPage()}
-                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:ring-gray-600 dark:hover:bg-gray-700"
-                  >
-                    <span className="sr-only">First</span>
-                    <ChevronsLeft className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => table.previousPage()}
-                    disabled={!table.getCanPreviousPage()}
-                    className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:ring-gray-600 dark:hover:bg-gray-700"
-                  >
-                    <span className="sr-only">Previous</span>
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
-                    className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:ring-gray-600 dark:hover:bg-gray-700"
-                  >
-                    <span className="sr-only">Next</span>
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                    disabled={!table.getCanNextPage()}
-                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:ring-gray-600 dark:hover:bg-gray-700"
-                  >
-                    <span className="sr-only">Last</span>
-                    <ChevronsRight className="h-5 w-5" />
-                  </button>
-                </nav>
+            </div>
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                <select
+                  value={pageSize}
+                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                  className="w-full sm:w-auto rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 dark:text-white ring-1 ring-inset ring-gray-300 dark:ring-gray-600 focus:ring-2 focus:ring-primary text-sm leading-6 dark:bg-gray-800"
+                >
+                  {[25, 50, 100, 200, 300].map((size) => (
+                    <option key={size} value={size}>
+                      Show {size}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                  Page {pageIndex + 1} of {Math.ceil(totalUsers / pageSize)}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-center gap-2 w-full sm:w-auto">
+                <button
+                  onClick={() => handlePageChange(0)}
+                  disabled={pageIndex === 0}
+                  className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:ring-gray-600 dark:hover:bg-gray-700"
+                >
+                  <span className="sr-only">First</span>
+                  <ChevronsLeft className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => handlePageChange(Math.max(0, pageIndex - 1))}
+                  disabled={pageIndex === 0}
+                  className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:ring-gray-600 dark:hover:bg-gray-700"
+                >
+                  <span className="sr-only">Previous</span>
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => handlePageChange(Math.min(Math.ceil(totalUsers / pageSize) - 1, pageIndex + 1))}
+                  disabled={pageIndex >= Math.ceil(totalUsers / pageSize) - 1}
+                  className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:ring-gray-600 dark:hover:bg-gray-700"
+                >
+                  <span className="sr-only">Next</span>
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => handlePageChange(Math.ceil(totalUsers / pageSize) - 1)}
+                  disabled={pageIndex >= Math.ceil(totalUsers / pageSize) - 1}
+                  className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:ring-gray-600 dark:hover:bg-gray-700"
+                >
+                  <span className="sr-only">Last</span>
+                  <ChevronsRight className="h-5 w-5" />
+                </button>
               </div>
             </div>
           </div>
@@ -642,13 +552,13 @@ export default function UsersPage() {
         isOpen={!!selectedUser}
         onClose={() => setSelectedUser(null)}
         user={selectedUser}
-        onUserUpdated={refreshUsers}
+        onUserUpdated={fetchUsers}
       />
 
       <CreateUserModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onUserCreated={refreshUsers}
+        onUserCreated={fetchUsers}
       />
     </div>
   );

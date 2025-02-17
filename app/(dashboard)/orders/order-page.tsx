@@ -698,6 +698,8 @@ export default function OrdersPage() {
   const [selectedOrderForPurchase, setSelectedOrderForPurchase] = useState<Order | null>(null);
   const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
 
+  const showSizes = [25, 50, 100, 200, 300, 500];
+
   // Get status and country from URL
   const activeStatus = searchParams.get("status")?.toUpperCase() || "ALL";
   const activeCountry = searchParams.get("country")?.toUpperCase() || "ALL";
@@ -1464,7 +1466,7 @@ export default function OrdersPage() {
                     onChange={(e) => setPageSize(Number(e.target.value))}
                     className="h-9 rounded-xl border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
                   >
-                    {[5, 10, 25, 50, 100].map((size) => (
+                    {showSizes.map((size) => (
                       <option key={size} value={size}>
                         Show {size}
                       </option>

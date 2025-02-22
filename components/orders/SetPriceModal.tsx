@@ -31,9 +31,9 @@ export default function SetPriceModal({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
-    price: order.price || "",
-    shippingPrice: order.shippingPrice || "",
-    localShippingPrice: order.localShippingPrice || "",
+    price: order.price ? order.price.toString() : "",
+    shippingPrice: order.shippingPrice ? order.shippingPrice.toString() : "",
+    localShippingPrice: order.localShippingPrice ? order.localShippingPrice.toString() : "",
   });
 
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
@@ -62,33 +62,32 @@ export default function SetPriceModal({
     setSuccess(false);
     setError("");
     setFormData({
-      price: order.price || "",
-      shippingPrice: order.shippingPrice || "",
-      localShippingPrice: order.localShippingPrice || "",
+      price: order.price ? order.price.toString() : "",
+      shippingPrice: order.shippingPrice ? order.shippingPrice.toString() : "",
+      localShippingPrice: order.localShippingPrice ? order.localShippingPrice.toString() : "",
     });
     onClose();
   }, [onClose, order]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    // Allow only numbers and decimal point
+    const sanitizedValue = value.replace(/[^\d.]/g, '');
+    setFormData(prev => ({
       ...prev,
-      [name]: value === "" ? "" : parseFloat(value) || 0,
+      [name]: sanitizedValue
     }));
   };
 
   const calculateTotal = () => {
     if (!exchangeRate) return "0.00";
 
-    // Convert TRY prices to USD and handle empty strings
-    const usdPrice = (Number(formData.price) / exchangeRate) * order.quantity;
-    const usdLocalShipping =
-      (Number(formData.localShippingPrice) / exchangeRate) * order.quantity;
-    // Shipping price is already in USD
-    const usdShipping = Number(formData.shippingPrice) * order.quantity;
+    // Convert string values to numbers for calculation
+    const usdPrice = (parseFloat(formData.price || "0") / exchangeRate) * order.quantity;
+    const usdLocalShipping = (parseFloat(formData.localShippingPrice || "0") / exchangeRate) * order.quantity;
+    const usdShipping = parseFloat(formData.shippingPrice || "0") * order.quantity;
 
     const total = usdPrice + usdShipping + usdLocalShipping;
-
     return total.toFixed(2);
   };
 
@@ -112,9 +111,9 @@ export default function SetPriceModal({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          price: Number(formData.price) / exchangeRate,
-          shippingPrice: Number(formData.shippingPrice),
-          localShippingPrice: Number(formData.localShippingPrice) / exchangeRate,
+          price: formData.price === "" ? 0 : Number((parseFloat(formData.price) / exchangeRate).toFixed(2)),
+          shippingPrice: formData.shippingPrice === "" ? 0 : Number(parseFloat(formData.shippingPrice).toFixed(2)),
+          localShippingPrice: formData.localShippingPrice === "" ? 0 : Number((parseFloat(formData.localShippingPrice) / exchangeRate).toFixed(2)),
           status: "PROCESSING",
         }),
       });
@@ -147,9 +146,9 @@ export default function SetPriceModal({
   useEffect(() => {
     if (isOpen) {
       setFormData({
-        price: order.price || "",
-        shippingPrice: order.shippingPrice || "",
-        localShippingPrice: order.localShippingPrice || "",
+        price: order.price ? order.price.toString() : "",
+        shippingPrice: order.shippingPrice ? order.shippingPrice.toString() : "",
+        localShippingPrice: order.localShippingPrice ? order.localShippingPrice.toString() : "",
       });
       setSuccess(false);
       setError("");
@@ -254,14 +253,12 @@ export default function SetPriceModal({
                         <div className="relative">
                           <WalletCardsIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                           <input
-                            type="number"
+                            type="text"
                             name="price"
                             value={formData.price}
                             onChange={handleInputChange}
-                            min="0"
-                            step="0.01"
                             className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all duration-200"
-                            required
+                            placeholder="0.00"
                           />
                         </div>
                       </motion.div>
@@ -278,14 +275,12 @@ export default function SetPriceModal({
                         <div className="relative">
                           <Truck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                           <input
-                            type="number"
+                            type="text"
                             name="shippingPrice"
                             value={formData.shippingPrice}
                             onChange={handleInputChange}
-                            min="0"
-                            step="0.01"
                             className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all duration-200"
-                            required
+                            placeholder="0.00"
                           />
                         </div>
                       </motion.div>
@@ -303,14 +298,12 @@ export default function SetPriceModal({
                       <div className="relative">
                         <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <input
-                          type="number"
+                          type="text"
                           name="localShippingPrice"
                           value={formData.localShippingPrice}
                           onChange={handleInputChange}
-                          min="0"
-                          step="0.01"
                           className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all duration-200"
-                          required
+                          placeholder="0.00"
                         />
                       </div>
                     </motion.div>

@@ -223,5 +223,5 @@ async function sendWhatsAppMessageInternal(orderId: number) {
 export async function sendWhatsAppMessage(orderId: number) {
   // TODO: REMOVE THIS LATER
   console.log(orderId);
-  await messageQueue.add(orderId);
+  // await messageQueue.add(orderId);
 }

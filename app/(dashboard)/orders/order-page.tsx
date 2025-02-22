@@ -200,6 +200,12 @@ const advancedSearch = (order: Order, term: string) => {
   );
 };
 
+const calculateTotalPrice = (order: Order) => {
+  const itemTotal = order.price * order.quantity;
+  const shippingTotal = (order.shippingPrice + order.localShippingPrice) * order.quantity;
+  return (itemTotal + shippingTotal).toFixed(2);
+};
+
 const columnHelper = createColumnHelper<Order>();
 
 const ActionsCell = ({
@@ -515,7 +521,7 @@ const MobileOrderCard = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="font-mono text-lg font-medium text-gray-900 dark:text-white">
-              ${(order.price + order.shippingPrice + order.localShippingPrice).toFixed(2)}
+              ${calculateTotalPrice(order)}
             </div>
             {order.prepaid ? (
               <span className="inline-flex items-center gap-1 rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/20">
@@ -879,35 +885,12 @@ export default function OrdersPage() {
       },
     }),
     columnHelper.accessor("price", {
-      header: ({ column }) => (
-        <div
-          className="flex cursor-pointer items-center gap-1"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Price
-          <ArrowUpDown className="h-4 w-4" />
-        </div>
-      ),
-      cell: (info) => {
-        const order = info.row.original;
-        const totalPrice = order.price + order.shippingPrice + order.localShippingPrice;
-        
+      header: "Price",
+      cell: ({ row }) => {
+        const order = row.original;
         return (
-          <div className="flex items-center gap-2">
-            <div className="font-mono font-medium text-gray-900 dark:text-white">
-              ${totalPrice.toFixed(2)}
-            </div>
-            {order.prepaid ? (
-              <span className="inline-flex items-center gap-1 rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/20">
-                <span className="h-1 w-1 rounded-full bg-green-500"></span>
-                PAID
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-700 ring-1 ring-inset ring-yellow-600/20 dark:bg-yellow-900/20">
-                <span className="h-1 w-1 rounded-full bg-yellow-500"></span>
-                UNPAID
-              </span>
-            )}
+          <div className="text-right tabular-nums">
+            ${calculateTotalPrice(order)}
           </div>
         );
       },

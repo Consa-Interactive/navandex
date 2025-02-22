@@ -16,6 +16,20 @@ interface EditOrderModalProps {
   onOrderUpdated: () => Promise<void>;
 }
 
+interface FormData {
+  title: string;
+  size: string;
+  color: string;
+  quantity: string | number;
+  price: number;
+  shippingPrice: number;
+  status: string;
+  productLink: string;
+  imageUrl: string;
+  notes: string;
+  orderNumber: string;
+}
+
 export default function EditOrderModal({
   isOpen,
   onClose,
@@ -41,7 +55,7 @@ export default function EditOrderModal({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [formData, setFormData] = useState(initialFormData);
+  const [formData, setFormData] = useState<FormData>(initialFormData);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -192,7 +206,7 @@ export default function EditOrderModal({
     setFormData((prev) => ({
       ...prev,
       [name]:
-        name === "quantity" ? parseInt(value) || 0 :
+        name === "quantity" ? (value === "" ? "" : parseInt(value) || "") :
         name === "price" || name === "shippingPrice" ? 
           parseFloat(parseFloat(value).toFixed(2)) || 0 
         : value,
@@ -210,10 +224,15 @@ export default function EditOrderModal({
       const token = Cookies.get("token");
       if (!token) throw new Error("No authentication token found");
 
+      // Convert quantity to number, default to 1 if empty or invalid
+      const quantityValue = typeof formData.quantity === 'string' && formData.quantity.trim() === "" 
+        ? 1 
+        : Number(formData.quantity) || 1;
+
       const requestBody = {
         ...formData,
         imageUrl: formData.imageUrl || null,
-        quantity: Number(formData.quantity),
+        quantity: quantityValue,
         price: Number(formData.price),
         shippingPrice: Number(formData.shippingPrice),
       };

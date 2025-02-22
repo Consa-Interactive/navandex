@@ -42,7 +42,21 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { status, price, shippingPrice, localShippingPrice, orderNumber, prepaid } = body;
+    const { 
+      status, 
+      price, 
+      shippingPrice, 
+      localShippingPrice, 
+      orderNumber, 
+      prepaid,
+      quantity,
+      title,
+      size,
+      color,
+      notes,
+      productLink,
+      imageUrl
+    } = body;
 
     // Admin/Worker kontrolü gereken statüler
     const adminOnlyStatuses = ["PURCHASED", "RECEIVED_IN_TURKEY", "DELIVERED_TO_WAREHOUSE"];
@@ -99,12 +113,13 @@ export async function PUT(
         ...(localShippingPrice !== undefined && { localShippingPrice: Number(localShippingPrice) }),
         ...(orderNumber && { orderNumber }),
         ...(prepaid !== undefined && { prepaid }),
-        ...(body.imageUrl !== undefined && { imageUrl: body.imageUrl }),
-        ...(body.title !== undefined && { title: body.title }),
-        ...(body.size !== undefined && { size: body.size }),
-        ...(body.color !== undefined && { color: body.color }),
-        ...(body.notes !== undefined && { notes: body.notes }),
-        ...(body.productLink !== undefined && { productLink: body.productLink }),
+        ...(quantity !== undefined && { quantity: Number(quantity) }),
+        ...(title !== undefined && { title }),
+        ...(size !== undefined && { size }),
+        ...(color !== undefined && { color }),
+        ...(notes !== undefined && { notes }),
+        ...(productLink !== undefined && { productLink }),
+        ...(imageUrl !== undefined && { imageUrl }),
         statusHistory: {
           create: {
             status: status || "PENDING",

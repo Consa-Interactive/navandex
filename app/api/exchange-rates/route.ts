@@ -82,7 +82,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { rate } = body;
+    const { rate, country } = body;
 
     if (!rate || typeof rate !== "number" || rate <= 0) {
       return NextResponse.json(
@@ -94,6 +94,7 @@ export async function POST(request: Request) {
     const newRate = await prisma.exchangeRate.create({
       data: {
         rate,
+        country,
       },
     });
 

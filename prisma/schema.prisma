@@ -177,7 +177,8 @@ model Invoice {
 
 model ExchangeRate {
   id        Int      @id @default(autoincrement())
-  rate      Float // Rate in TRY per 1 USD (e.g., 35.00)
+  rate      Float
+  country   Country
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

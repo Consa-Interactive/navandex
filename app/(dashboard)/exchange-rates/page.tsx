@@ -8,6 +8,7 @@ import { DollarSign, Plus } from "lucide-react";
 interface ExchangeRate {
   id: number;
   rate: number;
+  country: string;
   createdAt: string;
 }
 
@@ -15,6 +16,7 @@ export default function ExchangeRatesPage() {
   const [rates, setRates] = useState<ExchangeRate[]>([]);
   const [loading, setLoading] = useState(true);
   const [newRate, setNewRate] = useState("");
+  const [country, setCountry] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRates();
@@ -53,7 +55,7 @@ export default function ExchangeRatesPage() {
           "Content-Type": "application/json",
           authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ rate: parseFloat(newRate) }),
+        body: JSON.stringify({ rate: parseFloat(newRate), country: country }),
       });
 
       if (!response.ok) {
@@ -62,6 +64,7 @@ export default function ExchangeRatesPage() {
 
       toast.success("Exchange rate added successfully");
       setNewRate("");
+      setCountry(null);
       fetchRates();
     } catch (error) {
       console.error("Error creating rate:", error);
@@ -88,11 +91,8 @@ export default function ExchangeRatesPage() {
 
       {/* Add New Rate Form */}
       <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-        <form onSubmit={handleSubmit} className="flex items-end gap-4">
-          <div className="flex-1">
-            <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-              New Exchange Rate (TRY/USD)
-            </label>
+        <form onSubmit={handleSubmit} className="flex items-end">
+          <div className="flex-1 lg:grid-cols-3 w-full gap-4 lg:grid justify-center items-center">
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
               <input
@@ -106,14 +106,31 @@ export default function ExchangeRatesPage() {
                 required
               />
             </div>
+
+            <div className="relative">
+              <select
+                name="status"
+                value={country ?? "TURKEY"}
+                onChange={(e) => setCountry(e.target.value)}
+                className="w-full px-4 py-2.5 h-12 text-sm rounded-xl bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+              >
+                <option value="TURKEY">Turkey</option>
+                <option value="USA">United States</option>
+                <option value="UAE">Emarat</option>
+                <option value="UK">UK</option>
+                <option value="EUROPE">Europe</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+
+            <button
+              type="submit"
+              className="inline-flex flex-1 items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-white hover:bg-orange-600/90"
+            >
+              <Plus className="h-5 w-5" />
+              Add Rate
+            </button>
           </div>
-          <button
-            type="submit"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-white hover:bg-orange-600/90"
-          >
-            <Plus className="h-5 w-5" />
-            Add Rate
-          </button>
         </form>
       </div>
 
@@ -136,10 +153,10 @@ export default function ExchangeRatesPage() {
                 </div>
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">
-                    {rate.rate.toFixed(2)} TRY/USD
+                    {rate.rate.toFixed(2)} Rate
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {new Date(rate.createdAt).toLocaleString()}
+                    {new Date(rate.createdAt).toLocaleString()} * {rate.country}
                   </p>
                 </div>
               </div>

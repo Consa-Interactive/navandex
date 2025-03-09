@@ -10,7 +10,7 @@ import {
   WalletCardsIcon,
 } from "lucide-react";
 import Cookies from "js-cookie";
-import { Order } from "@prisma/client";
+import { ExchangeRate, Order } from "@prisma/client";
 import { useApp } from "@/providers/AppProvider";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -33,30 +33,47 @@ export default function SetPriceModal({
   const [formData, setFormData] = useState({
     price: order.price ? order.price.toString() : "",
     shippingPrice: order.shippingPrice ? order.shippingPrice.toString() : "",
-    localShippingPrice: order.localShippingPrice ? order.localShippingPrice.toString() : "",
+    localShippingPrice: order.localShippingPrice
+      ? order.localShippingPrice.toString()
+      : "",
+    country: order.country ? order.country.toString() : "",
   });
 
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
 
-  useEffect(() => {
-    const fetchExchangeRate = async () => {
-      try {
-        const token = Cookies.get("token");
-        const response = await fetch("/api/exchange-rates", {
-          headers: { authorization: `Bearer ${token}` },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (data.length > 0) {
+  // Modified to fetch exchange rate based on selected country
+  const fetchExchangeRate = useCallback(async (country: string) => {
+    try {
+      const token = Cookies.get("token");
+      const response = await fetch("/api/exchange-rates", {
+        headers: { authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.length > 0) {
+          // Find the correct exchange rate for the selected country
+          const countryRate = data.find(
+            (rate: ExchangeRate) => rate.country === country
+          );
+          if (countryRate) {
+            setExchangeRate(countryRate.rate);
+          } else {
+            // Default to the first rate if country-specific rate not found
             setExchangeRate(data[0].rate);
           }
         }
-      } catch (error) {
-        console.error("Failed to fetch exchange rate:", error);
       }
-    };
-    fetchExchangeRate();
+    } catch (error) {
+      console.error("Failed to fetch exchange rate:", error);
+    }
   }, []);
+
+  // Fetch exchange rate when component mounts and when country changes
+  useEffect(() => {
+    if (formData.country) {
+      fetchExchangeRate(formData.country);
+    }
+  }, [formData.country, fetchExchangeRate]);
 
   const handleClose = useCallback(() => {
     setSuccess(false);
@@ -64,7 +81,10 @@ export default function SetPriceModal({
     setFormData({
       price: order.price ? order.price.toString() : "",
       shippingPrice: order.shippingPrice ? order.shippingPrice.toString() : "",
-      localShippingPrice: order.localShippingPrice ? order.localShippingPrice.toString() : "",
+      localShippingPrice: order.localShippingPrice
+        ? order.localShippingPrice.toString()
+        : "",
+      country: order.country ? order.country.toString() : "",
     });
     onClose();
   }, [onClose, order]);
@@ -72,10 +92,10 @@ export default function SetPriceModal({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     // Allow only numbers and decimal point
-    const sanitizedValue = value.replace(/[^\d.]/g, '');
-    setFormData(prev => ({
+    const sanitizedValue = value.replace(/[^\d.]/g, "");
+    setFormData((prev) => ({
       ...prev,
-      [name]: sanitizedValue
+      [name]: sanitizedValue,
     }));
   };
 
@@ -83,12 +103,26 @@ export default function SetPriceModal({
     if (!exchangeRate) return "0.00";
 
     // Convert string values to numbers for calculation
-    const usdPrice = (parseFloat(formData.price || "0") / exchangeRate) * order.quantity;
-    const usdLocalShipping = (parseFloat(formData.localShippingPrice || "0") / exchangeRate) * order.quantity;
-    const usdShipping = parseFloat(formData.shippingPrice || "0") * order.quantity;
+    const usdPrice =
+      (parseFloat(formData.price || "0") / exchangeRate) * order.quantity;
+    const usdLocalShipping =
+      (parseFloat(formData.localShippingPrice || "0") / exchangeRate) *
+      order.quantity;
+    const usdShipping =
+      parseFloat(formData.shippingPrice || "0") * order.quantity;
 
     const total = usdPrice + usdShipping + usdLocalShipping;
     return total.toFixed(2);
+  };
+
+  // Handle country change specifically
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newCountry = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      country: newCountry,
+    }));
+    // Exchange rate will be updated via the useEffect
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,10 +145,24 @@ export default function SetPriceModal({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          price: formData.price === "" ? 0 : Number((parseFloat(formData.price) / exchangeRate).toFixed(2)),
-          shippingPrice: formData.shippingPrice === "" ? 0 : Number(parseFloat(formData.shippingPrice).toFixed(2)),
-          localShippingPrice: formData.localShippingPrice === "" ? 0 : Number((parseFloat(formData.localShippingPrice) / exchangeRate).toFixed(2)),
+          price:
+            formData.price === ""
+              ? 0
+              : Number((parseFloat(formData.price) / exchangeRate).toFixed(2)),
+          shippingPrice:
+            formData.shippingPrice === ""
+              ? 0
+              : Number(parseFloat(formData.shippingPrice).toFixed(2)),
+          localShippingPrice:
+            formData.localShippingPrice === ""
+              ? 0
+              : Number(
+                  (
+                    parseFloat(formData.localShippingPrice) / exchangeRate
+                  ).toFixed(2)
+                ),
           status: "PROCESSING",
+          country: formData.country, // Save the selected country
         }),
       });
 
@@ -147,13 +195,23 @@ export default function SetPriceModal({
     if (isOpen) {
       setFormData({
         price: order.price ? order.price.toString() : "",
-        shippingPrice: order.shippingPrice ? order.shippingPrice.toString() : "",
-        localShippingPrice: order.localShippingPrice ? order.localShippingPrice.toString() : "",
+        shippingPrice: order.shippingPrice
+          ? order.shippingPrice.toString()
+          : "",
+        localShippingPrice: order.localShippingPrice
+          ? order.localShippingPrice.toString()
+          : "",
+        country: order.country ? order.country.toString() : "",
       });
       setSuccess(false);
       setError("");
+
+      // Fetch exchange rate when modal opens
+      if (order.country) {
+        fetchExchangeRate(order.country.toString());
+      }
     }
-  }, [order, isOpen]);
+  }, [order, isOpen, fetchExchangeRate]);
 
   if (!isOpen) return null;
 
@@ -311,6 +369,30 @@ export default function SetPriceModal({
                     <motion.div
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                      className="space-y-2"
+                    >
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                        Country
+                      </label>
+                      <select
+                        name="country"
+                        value={formData.country}
+                        onChange={handleCountryChange}
+                        className="w-full px-4 py-2.5 h-12 text-sm rounded-xl bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                      >
+                        <option value="TURKEY">Turkey</option>
+                        <option value="USA">United States</option>
+                        <option value="UAE">Emarat</option>
+                        <option value="UK">UK</option>
+                        <option value="EUROPE">Europe</option>
+                        <option value="OTHER">Other</option>
+                      </select>
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
                       transition={{
                         delay: 0.4,
                         type: "spring",
@@ -332,6 +414,12 @@ export default function SetPriceModal({
                           ${calculateTotal()}
                         </motion.span>
                       </div>
+                      {exchangeRate && (
+                        <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                          Using exchange rate: {exchangeRate.toFixed(2)} for{" "}
+                          {formData.country}
+                        </div>
+                      )}
                     </motion.div>
                   </div>
 

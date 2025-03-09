@@ -105,7 +105,7 @@ export async function POST(request: Request) {
       console.error("Error scraping product:", error);
       // Continue with undefined scraper data
     }
-    
+
     // Get total order count for default title
     const totalOrders = await prisma.order.count();
 
@@ -125,6 +125,7 @@ export async function POST(request: Request) {
         status: "PENDING",
         productLink: body.productLink || "",
         imageUrl,
+        country: body.country || "TURKEY",
         notes: body.notes || "",
         userId: userId,
       },

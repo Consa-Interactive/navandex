@@ -2,12 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import {
-  X,
-  Package,
-  CheckCircle2,
-  Upload,
-} from "lucide-react";
+import { X, Package, CheckCircle2, Upload } from "lucide-react";
 import { useApp } from "@/providers/AppProvider";
 import Cookies from "js-cookie";
 import Image from "next/image";
@@ -44,6 +39,7 @@ export default function AddOrderModal({
     quantity: 1,
     notes: "",
     customer: "",
+    country: "TURKEY", // Default country
   });
   const [isScrapingLoading, setIsScrapingLoading] = useState(false);
 
@@ -52,12 +48,9 @@ export default function AddOrderModal({
       const fetchCustomers = async () => {
         try {
           const token = Cookies.get("token");
-          const response = await fetch(
-            `/api/users?search=${searchTerm}`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
+          const response = await fetch(`/api/users?search=${searchTerm}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
           if (response.ok) {
             const data = await response.json();
             setCustomers(data.users);
@@ -178,7 +171,7 @@ export default function AddOrderModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.productLink.trim()) {
       setError("Product link is required");
       return;
@@ -189,7 +182,7 @@ export default function AddOrderModal({
 
     try {
       let imageUrl = "";
-      
+
       // Upload image if one is selected
       if (selectedImage) {
         const formData = new FormData();
@@ -230,6 +223,7 @@ export default function AddOrderModal({
           quantity: Number(formData.quantity) || 1,
           notes: formData.notes || "",
           imageUrl: imageUrl,
+          country: formData.country,
           userId: isAdminOrWorker ? Number(formData.customer) : user?.id,
         }),
       });
@@ -281,7 +275,9 @@ export default function AddOrderModal({
         ) : (
           <>
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Add New Order</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Add New Order
+              </h2>
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
@@ -351,56 +347,55 @@ export default function AddOrderModal({
                       </div>
                     )}
                   </div>
-              
-              {/* Customer Info Section (Only for Admin/Worker) */}
-              {isAdminOrWorker && (
-                <div className="space-y-4">
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                      Search Customer
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full px-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-                        placeholder="Search by name or phone number"
-                      />
-                      {isDropdownOpen && customers.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg">
-                          {customers.map((customer) => (
-                            <div
-                              key={customer.id}
-                              onClick={() => {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  customer: customer.id.toString(),
-                                }));
-                                setSearchTerm(
-                                  `${customer.name} (${customer.phoneNumber})`
-                                );
-                                setIsDropdownOpen(false);
-                              }}
-                              className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
-                            >
-                              <div>
-                                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                  {customer.name}
-                                </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  {customer.phoneNumber}
-                                </p>
-                              </div>
+                  {/* Customer Info Section (Only for Admin/Worker) */}
+                  {isAdminOrWorker && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                          Search Customer
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full px-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                            placeholder="Search by name or phone number"
+                          />
+                          {isDropdownOpen && customers.length > 0 && (
+                            <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg">
+                              {customers.map((customer) => (
+                                <div
+                                  key={customer.id}
+                                  onClick={() => {
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      customer: customer.id.toString(),
+                                    }));
+                                    setSearchTerm(
+                                      `${customer.name} (${customer.phoneNumber})`
+                                    );
+                                    setIsDropdownOpen(false);
+                                  }}
+                                  className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                                >
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                      {customer.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                      {customer.phoneNumber}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                </div>
-              )}
+                  )}
 
                   {/* Product Link */}
                   <div className="space-y-2">
@@ -469,6 +464,26 @@ export default function AddOrderModal({
                     </div>
                   </div>
 
+                  {/* Country Selector */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                      Country
+                    </label>
+                    <select
+                      name="country"
+                      value={formData.country}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                    >
+                      <option value="TURKEY">Turkey</option>
+                      <option value="USA">United States</option>
+                      <option value="UAE">Emarat</option>
+                      <option value="UK">UK</option>
+                      <option value="EUROPE">Europe</option>
+                      <option value="OTHER">Other</option>
+                    </select>
+                  </div>
+
                   {/* Quantity */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -501,10 +516,10 @@ export default function AddOrderModal({
                 </div>
               </div>
 
-
-
               {error && (
-                <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+                <p className="text-sm text-red-500 dark:text-red-400">
+                  {error}
+                </p>
               )}
 
               <div className="flex justify-end gap-3">

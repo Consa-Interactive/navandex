@@ -11,7 +11,7 @@ export default function Footer() {
           rel="noopener noreferrer"
           className="font-medium text-primary hover:text-primary-dark transition-colors"
         >
-          Consa Interactive
+          Coonsa Interactive
         </a>
       </p>
     </footer>

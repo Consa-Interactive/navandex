@@ -67,8 +67,10 @@ model Order {
   price              Float                @default(0)
   shippingPrice      Float                @default(0)
   localShippingPrice Float                @default(0)
+  iqdPrice           Float?               @default(0)
+  iqdShippingPrice   Float?               @default(0)
   status             OrderStatus          @default(PENDING)
-  orderNumber        String?              
+  orderNumber        String?
   productLink        String?
   imageUrl           String?
   notes              String?

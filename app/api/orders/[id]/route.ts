@@ -6,16 +6,13 @@ import { sendWhatsAppMessage } from "@/lib/services/whatsapp";
 
 const prisma = new PrismaClient();
 
-export async function PUT(
-  request: NextRequest
-) {
+export async function PUT(request: NextRequest) {
   try {
     const id = request.nextUrl.pathname.split("/").pop()?.trim() || "";
     const orderId = parseInt(id);
     if (isNaN(orderId)) {
       return NextResponse.json({ error: "Invalid order ID" }, { status: 400 });
     }
-    
 
     const authHeader = request.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -33,21 +30,20 @@ export async function PUT(
       );
     }
 
-    const decoded = verify(token, process.env.JWT_SECRET!) as JwtPayload & { role: string };
+    const decoded = verify(token, process.env.JWT_SECRET!) as JwtPayload & {
+      role: string;
+    };
     if (!decoded || !decoded.sub) {
-      return NextResponse.json(
-        { error: "Invalid token" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
     const body = await request.json();
-    const { 
-      status, 
-      price, 
-      shippingPrice, 
-      localShippingPrice, 
-      orderNumber, 
+    const {
+      status,
+      price,
+      shippingPrice,
+      localShippingPrice,
+      orderNumber,
       prepaid,
       quantity,
       title,
@@ -55,12 +51,22 @@ export async function PUT(
       color,
       notes,
       productLink,
-      imageUrl
+      imageUrl,
+      iqdPrice,
+      iqdShippingPrice,
     } = body;
 
     // Admin/Worker kontrolü gereken statüler
-    const adminOnlyStatuses = ["PURCHASED", "RECEIVED_IN_TURKEY", "DELIVERED_TO_WAREHOUSE"];
-    if (adminOnlyStatuses.includes(status) && decoded.role !== "ADMIN" && decoded.role !== "WORKER") {
+    const adminOnlyStatuses = [
+      "PURCHASED",
+      "RECEIVED_IN_TURKEY",
+      "DELIVERED_TO_WAREHOUSE",
+    ];
+    if (
+      adminOnlyStatuses.includes(status) &&
+      decoded.role !== "ADMIN" &&
+      decoded.role !== "WORKER"
+    ) {
       return NextResponse.json(
         { error: "Only administrators and workers can perform this action" },
         { status: 403 }
@@ -70,16 +76,16 @@ export async function PUT(
     // Sipariş sahibi veya admin/worker kontrolü
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      select: { 
+      select: {
         userId: true,
         user: {
           select: {
             phoneNumber: true,
-            name: true
-          }
+            name: true,
+          },
         },
-        title: true
-      }
+        title: true,
+      },
     });
 
     if (!order) {
@@ -87,7 +93,11 @@ export async function PUT(
     }
 
     // Eğer kullanıcı admin/worker değilse ve siparişin sahibi de değilse
-    if (decoded.role !== "ADMIN" && decoded.role !== "WORKER" && order.userId !== parseInt(decoded.sub)) {
+    if (
+      decoded.role !== "ADMIN" &&
+      decoded.role !== "WORKER" &&
+      order.userId !== parseInt(decoded.sub)
+    ) {
       return NextResponse.json(
         { error: "You can only update your own orders" },
         { status: 403 }
@@ -109,8 +119,16 @@ export async function PUT(
       data: {
         ...(status && { status }),
         ...(price !== undefined && { price: Number(price) }),
-        ...(shippingPrice !== undefined && { shippingPrice: Number(shippingPrice) }),
-        ...(localShippingPrice !== undefined && { localShippingPrice: Number(localShippingPrice) }),
+        ...(shippingPrice !== undefined && {
+          shippingPrice: Number(shippingPrice),
+        }),
+        ...(iqdPrice !== undefined && { iqdPrice: Number(iqdPrice) }),
+        ...(iqdShippingPrice !== undefined && {
+          iqdShippingPrice: Number(iqdShippingPrice),
+        }),
+        ...(localShippingPrice !== undefined && {
+          localShippingPrice: Number(localShippingPrice),
+        }),
         ...(orderNumber && { orderNumber }),
         ...(prepaid !== undefined && { prepaid }),
         ...(quantity !== undefined && { quantity: Number(quantity) }),
@@ -124,7 +142,13 @@ export async function PUT(
           create: {
             status: status || "PENDING",
             userId: Number(decoded.sub),
-            notes: `Order ${status ? `status updated to ${status}` : "updated"}${orderNumber ? ` with order number ${orderNumber}` : ""}${prepaid !== undefined ? ` and marked as ${prepaid ? 'prepaid' : 'not prepaid'}` : ""}`,
+            notes: `Order ${
+              status ? `status updated to ${status}` : "updated"
+            }${orderNumber ? ` with order number ${orderNumber}` : ""}${
+              prepaid !== undefined
+                ? ` and marked as ${prepaid ? "prepaid" : "not prepaid"}`
+                : ""
+            }`,
           },
         },
       },
@@ -140,8 +164,12 @@ export async function PUT(
 
     // WhatsApp bildirimi gönderme
     if (status) {
-      const notificationStatuses = ["CANCELLED", "PROCESSING", "DELIVERED_TO_WAREHOUSE"];
-      
+      const notificationStatuses = [
+        "CANCELLED",
+        "PROCESSING",
+        "DELIVERED_TO_WAREHOUSE",
+      ];
+
       if (notificationStatuses.includes(status)) {
         try {
           await sendWhatsAppMessage(orderId);
@@ -161,24 +189,16 @@ export async function PUT(
   }
 }
 
-export async function GET(
-  request: NextRequest
-) {
+export async function GET(request: NextRequest) {
   try {
     const id = request.nextUrl.pathname.split("/").pop()?.trim() || "";
     if (!id || isNaN(Number(id))) {
-      return NextResponse.json(
-        { error: "Invalid order ID" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid order ID" }, { status: 400 });
     }
 
     const authHeader = request.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "No token provided" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "No token provided" }, { status: 401 });
     }
 
     const token = authHeader.split(" ")[1];
@@ -195,10 +215,7 @@ export async function GET(
     };
 
     if (!decoded || !decoded.sub) {
-      return NextResponse.json(
-        { error: "Invalid token" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
     const order = await prisma.order.findUnique({
@@ -231,10 +248,7 @@ export async function GET(
     });
 
     if (!order) {
-      return NextResponse.json(
-        { error: "Order not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
     return NextResponse.json(order);

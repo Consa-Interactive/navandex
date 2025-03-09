@@ -33,6 +33,7 @@ import {
   XCircle,
   Wallet,
   PackageCheck,
+  BadgeDollarSign,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import AddOrderModal from "@/components/orders/AddOrderModal";
@@ -49,7 +50,12 @@ import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.share
 import LabelModal from "@/components/orders/LabelModal";
 import PurchaseOrderModal from "@/components/orders/PurchaseOrderModal";
 import BulkUpdateModal from "@/components/orders/BulkUpdateModal";
-import { ACTIVE_ORDER_STATUSES, PASSIVE_ORDER_STATUSES, STATUS_FILTERS } from "@/constants/orderStatuses";
+import {
+  ACTIVE_ORDER_STATUSES,
+  PASSIVE_ORDER_STATUSES,
+  STATUS_FILTERS,
+} from "@/constants/orderStatuses";
+import IqdReportModal from "@/components/orders/IqdReportModal";
 
 type OrderStatus =
   | "PENDING"
@@ -62,8 +68,9 @@ type OrderStatus =
   | "PREPAID"
   | "RECEIVED_IN_TURKEY"
   | "DELIVERED_TO_WAREHOUSE"
-  | "RETURNED";
-
+  | "RETURNED"
+  | "REJECTED"
+  | "APPROVED";
 interface OrderItem {
   id: number;
   title: string;
@@ -81,7 +88,9 @@ interface OrderItem {
   orderNumber: string;
   createdAt: Date;
   updatedAt: Date;
-  
+  iqdPrice: number;
+  iqdShippingPrice: number;
+
   userId: number;
   prepaid: boolean;
   invoiceId: number | null;
@@ -149,6 +158,16 @@ const statusColors = {
     text: "text-orange-700 dark:text-orange-500",
     dot: "bg-orange-500",
   },
+  APPROVED: {
+    bg: "bg-orange-50 dark:bg-orange-900/20",
+    text: "text-orange-700 dark:text-orange-500",
+    dot: "bg-orange-500",
+  },
+  REJECTED: {
+    bg: "bg-orange-50 dark:bg-orange-900/20",
+    text: "text-orange-700 dark:text-orange-500",
+    dot: "bg-orange-500",
+  },
 };
 
 const CUSTOMER_STATUS_FILTERS = [
@@ -159,6 +178,9 @@ const CUSTOMER_STATUS_FILTERS = [
   { label: "Purchased", value: "PURCHASED", color: "pink" },
   { label: "Delivered", value: "DELIVERED", color: "green" },
   { label: "Canceled", value: "CANCELLED", color: "red" },
+  { label: "Approved", value: "APPROVED", color: "green" },
+  { label: "Rejected", value: "REJECTED", color: "red" },
+  { label: "Returned", value: "RETURNED", color: "yellow" },
 ];
 
 // Function to fetch orders
@@ -202,7 +224,8 @@ const advancedSearch = (order: Order, term: string) => {
 
 const calculateTotalPrice = (order: Order) => {
   const itemTotal = order.price * order.quantity;
-  const shippingTotal = (order.shippingPrice + order.localShippingPrice) * order.quantity;
+  const shippingTotal =
+    (order.shippingPrice + order.localShippingPrice) * order.quantity;
   return (itemTotal + shippingTotal).toFixed(2);
 };
 
@@ -214,6 +237,7 @@ const ActionsCell = ({
   setSelectedOrderForAction,
   handlePrepaidClick,
   handleReceivedInTurkey,
+  setSelectedOrderForIqdPrice,
   setSelectedOrderForPrice,
   setSelectedOrderForLabel,
   setSelectedOrderForPurchase,
@@ -224,6 +248,7 @@ const ActionsCell = ({
   setSelectedOrderForAction: (order: Order) => void;
   handlePrepaidClick: (order: Order) => Promise<void>;
   handleReceivedInTurkey: (order: Order) => Promise<void>;
+  setSelectedOrderForIqdPrice: (order: Order) => void;
   setSelectedOrderForPrice: (order: Order) => void;
   setSelectedOrderForLabel: (order: Order) => void;
   setSelectedOrderForPurchase: (order: Order) => void;
@@ -300,6 +325,12 @@ const ActionsCell = ({
           >
             <PackageCheck className="h-4 w-4" />
           </button>
+          <button
+            onClick={() => setSelectedOrderForIqdPrice(order)}
+            className="rounded-lg p-2 text-rose-600 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-900/20"
+          >
+            <BadgeDollarSign className="h-4 w-4" />
+          </button>
         </>
       )}
     </div>
@@ -359,6 +390,18 @@ const getStatusButtonClasses = (status: string, isActive: boolean) => {
       active: "bg-rose-500 text-white ring-2 ring-rose-500/20",
       inactive: "bg-rose-50 text-rose-600 hover:bg-rose-100",
     },
+    APPROVED: {
+      active: "bg-rose-500 text-white ring-2 ring-rose-500/20",
+      inactive: "bg-rose-50 text-rose-600 hover:bg-rose-100",
+    },
+    REJECTED: {
+      active: "bg-rose-500 text-white ring-2 ring-rose-500/20",
+      inactive: "bg-rose-50 text-rose-600 hover:bg-rose-100",
+    },
+    RETURNED: {
+      active: "bg-rose-500 text-white ring-2 ring-rose-500/20",
+      inactive: "bg-rose-50 text-rose-600 hover:bg-rose-100",
+    },
   };
 
   return `${baseClasses} ${
@@ -382,6 +425,9 @@ const getStatusDotClass = (status: string) => {
     DELIVERED: "bg-[#22C55E]",
     CANCELLED: "bg-red-500",
     ISSUE: "bg-rose-500",
+    RETURNED: "bg-rose-500",
+    APPROVED: "bg-rose-500",
+    REJECTED: "bg-rose-500",
   };
 
   return `h-2 w-2 rounded-full ${
@@ -397,6 +443,7 @@ const MobileOrderCard = ({
   onAction,
   handlePrepaidClick,
   handleReceivedInTurkey,
+  setSelectedOrderForIqdPrice,
   setSelectedOrderForPrice,
   setSelectedImage,
   setSelectedOrderForLabel,
@@ -411,6 +458,7 @@ const MobileOrderCard = ({
   router: AppRouterInstance;
   handlePrepaidClick: (order: Order) => Promise<void>;
   handleReceivedInTurkey: (order: Order) => Promise<void>;
+  setSelectedOrderForIqdPrice: (order: Order) => void;
   setSelectedOrderForPrice: (order: Order) => void;
   setSelectedImage: (image: { src: string; alt: string } | null) => void;
   setSelectedOrderForLabel: (order: Order) => void;
@@ -631,6 +679,14 @@ const MobileOrderCard = ({
                 <PackageCheck className="h-4 w-4" />
                 Received
               </button>
+
+              <button
+                onClick={() => setSelectedOrderForIqdPrice(order)}
+                className="flex items-center justify-center gap-2 p-3 text-sm font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/20"
+              >
+                <PackageCheck className="h-4 w-4" />
+                Set IQD
+              </button>
             </>
           )}
         </div>
@@ -692,6 +748,9 @@ export default function OrdersPage() {
     useState<Order | null>(null);
   const [selectedOrderForAction, setSelectedOrderForAction] =
     useState<Order | null>(null);
+
+  const [selectedOrderForIqdPrice, setSelectedOrderForIqdPrice] =
+    useState<Order | null>(null);
   const { user, orderUpdates: appOrderUpdates } = useApp();
   const isAdmin = user?.role === "ADMIN" || user?.role === "WORKER";
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
@@ -700,8 +759,10 @@ export default function OrdersPage() {
     src: string;
     alt: string;
   } | null>(null);
-  const [selectedOrderForLabel, setSelectedOrderForLabel] = useState<Order | null>(null);
-  const [selectedOrderForPurchase, setSelectedOrderForPurchase] = useState<Order | null>(null);
+  const [selectedOrderForLabel, setSelectedOrderForLabel] =
+    useState<Order | null>(null);
+  const [selectedOrderForPurchase, setSelectedOrderForPurchase] =
+    useState<Order | null>(null);
   const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
 
   const showSizes = [25, 50, 100, 200, 300, 500];
@@ -762,7 +823,7 @@ export default function OrdersPage() {
                 | "PURCHASED"
                 | "RECEIVED_IN_TURKEY"
                 | "DELIVERED_TO_WAREHOUSE"
-            ) 
+            )
           : activeStatus === "PASSIVE"
           ? PASSIVE_ORDER_STATUSES.includes(
               order.status as
@@ -841,7 +902,9 @@ export default function OrdersPage() {
               rel="noopener noreferrer"
               className="line-clamp-1 flex-1 text-sm font-medium text-gray-900 hover:text-primary dark:text-white dark:hover:text-primary"
             >
-              {info.getValue()?.trim() ? info.getValue() : `Order-${info.row.original.id}`}
+              {info.getValue()?.trim()
+                ? info.getValue()
+                : `Order-${info.row.original.id}`}
             </a>
 
             <div className="flex flex-wrap gap-1">
@@ -983,6 +1046,7 @@ export default function OrdersPage() {
           setSelectedOrderForAction={setSelectedOrderForAction}
           handlePrepaidClick={handlePrepaidClick}
           handleReceivedInTurkey={handleReceivedInTurkey}
+          setSelectedOrderForIqdPrice={setSelectedOrderForIqdPrice}
           setSelectedOrderForPrice={setSelectedOrderForPrice}
           setSelectedOrderForLabel={setSelectedOrderForLabel}
           setSelectedOrderForPurchase={setSelectedOrderForPurchase}
@@ -1257,21 +1321,23 @@ export default function OrdersPage() {
           {/* Status Filters */}
           <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-2">
             <div className="flex flex-nowrap gap-2">
-              {(isAdmin ? STATUS_FILTERS : CUSTOMER_STATUS_FILTERS).map((status) => (
-                <button
-                  key={status.value}
-                  onClick={() => updateFilters(status.value, activeCountry)}
-                  className={getStatusButtonClasses(
-                    status.value,
-                    activeStatus === status.value
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className={getStatusDotClass(status.value)} />
-                    {status.label}
-                  </div>
-                </button>
-              ))}
+              {(isAdmin ? STATUS_FILTERS : CUSTOMER_STATUS_FILTERS).map(
+                (status) => (
+                  <button
+                    key={status.value}
+                    onClick={() => updateFilters(status.value, activeCountry)}
+                    className={getStatusButtonClasses(
+                      status.value,
+                      activeStatus === status.value
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={getStatusDotClass(status.value)} />
+                      {status.label}
+                    </div>
+                  </button>
+                )
+              )}
             </div>
           </div>
 
@@ -1325,11 +1391,15 @@ export default function OrdersPage() {
                           className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                           checked={
                             filteredOrders.length > 0 &&
-                            filteredOrders.every((order) => selectedOrders.includes(order.id))
+                            filteredOrders.every((order) =>
+                              selectedOrders.includes(order.id)
+                            )
                           }
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setSelectedOrders(filteredOrders.map((order) => order.id));
+                              setSelectedOrders(
+                                filteredOrders.map((order) => order.id)
+                              );
                             } else {
                               setSelectedOrders([]);
                             }
@@ -1557,6 +1627,7 @@ export default function OrdersPage() {
                     router={router}
                     handlePrepaidClick={handlePrepaidClick}
                     handleReceivedInTurkey={handleReceivedInTurkey}
+                    setSelectedOrderForIqdPrice={setSelectedOrderForIqdPrice}
                     setSelectedOrderForPrice={setSelectedOrderForPrice}
                     setSelectedImage={setSelectedImage}
                     setSelectedOrderForLabel={setSelectedOrderForLabel}
@@ -1623,11 +1694,21 @@ export default function OrdersPage() {
           />
         )}
 
-        {selectedOrderForPrice && (
+        {selectedOrderForPrice && isAdmin && (
           <SetPriceModal
             isOpen={!!selectedOrderForPrice}
             onClose={() => setSelectedOrderForPrice(null)}
             order={selectedOrderForPrice as OrderType}
+            onOrderUpdated={async () => {
+              await triggerOrderUpdate();
+            }}
+          />
+        )}
+        {selectedOrderForIqdPrice && isAdmin && (
+          <IqdReportModal
+            isOpen={!!selectedOrderForIqdPrice}
+            onClose={() => setSelectedOrderForIqdPrice(null)}
+            order={selectedOrderForIqdPrice as OrderType}
             onOrderUpdated={async () => {
               await triggerOrderUpdate();
             }}
@@ -1690,7 +1771,11 @@ export default function OrdersPage() {
               setIsBulkUpdateModalOpen(false);
               setSelectedOrders([]);
             }}
-            selectedOrders={selectedOrders.map(id => orders.find(order => order.id === id)).filter(Boolean) as OrderType[]}
+            selectedOrders={
+              selectedOrders
+                .map((id) => orders.find((order) => order.id === id))
+                .filter(Boolean) as OrderType[]
+            }
             onOrdersUpdated={async () => {
               await fetchOrders();
               setSelectedOrders([]);

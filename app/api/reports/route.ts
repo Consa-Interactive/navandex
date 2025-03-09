@@ -50,7 +50,8 @@ export async function GET(req: Request) {
     }
 
     const url = new URL(req.url);
-    const startDate = url.searchParams.get("startDate") || new Date(0).toISOString();
+    const startDate =
+      url.searchParams.get("startDate") || new Date(0).toISOString();
     const endDate = url.searchParams.get("endDate") || new Date().toISOString();
     const status = url.searchParams.get("status") as OrderStatus | null;
 
@@ -64,61 +65,80 @@ export async function GET(req: Request) {
     };
 
     // Get orders count and financial data
-    const [orders, financialData, ordersByStatus, orderTrends] = await Promise.all([
-      // Orders count
-      prisma.order.count({
-        where: filters,
-      }),
+    const [orders, financialData, ordersByStatus, orderTrends] =
+      await Promise.all([
+        // Orders count
+        prisma.order.count({
+          where: filters,
+        }),
 
-      // Financial totals
-      prisma.order.aggregate({
-        where: filters,
-        _sum: {
-          price: true,
-          shippingPrice: true,
-          localShippingPrice: true,
-        },
-      }),
+        // Financial totals
+        prisma.order.aggregate({
+          where: filters,
+          _sum: {
+            price: true,
+            shippingPrice: true,
+            localShippingPrice: true,
+            iqdPrice: true,
+            iqdShippingPrice: true,
+          },
+        }),
 
-      // Orders grouped by status
-      prisma.order.groupBy({
-        by: ['status'],
-        where: {
-          createdAt: filters.createdAt,
-          ...(status && { status: status as OrderStatus })
-        },
-        _count: true,
-      }),
+        // Orders grouped by status
+        prisma.order.groupBy({
+          by: ["status"],
+          where: {
+            createdAt: filters.createdAt,
+            ...(status && { status: status as OrderStatus }),
+          },
+          _count: true,
+        }),
 
-      // Order trends by month
-      prisma.order.groupBy({
-        by: ['status', 'createdAt'],
-        where: filters,
-        _count: true,
-        orderBy: {
-          createdAt: 'asc',
-        },
-      })
-    ]);
+        // Order trends by month
+        prisma.order.groupBy({
+          by: ["status", "createdAt"],
+          where: filters,
+          _count: true,
+          orderBy: {
+            createdAt: "asc",
+          },
+        }),
+      ]);
 
     // Process order trends data
     const trendsByMonth = new Map();
     orderTrends.forEach((trend) => {
       const date = new Date(trend.createdAt);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const monthKey = `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}`;
       const monthData = trendsByMonth.get(monthKey) || {
-        month: new Date(date.getFullYear(), date.getMonth(), 1).toLocaleDateString('en-US', { month: 'short' }),
+        month: new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          1
+        ).toLocaleDateString("en-US", { month: "short" }),
         total: 0,
         cancelled: 0,
         completed: 0,
-        processing: 0
+        processing: 0,
       };
 
-      if (trend.status === 'CANCELLED') {
+      if (trend.status === "CANCELLED") {
         monthData.cancelled = trend._count;
-      } else if (['DELIVERED', 'COMPLETED'].includes(trend.status)) {
+      } else if (["DELIVERED", "COMPLETED"].includes(trend.status)) {
         monthData.completed = (monthData.completed || 0) + trend._count;
-      } else if (['PENDING', 'PROCESSING', 'CONFIRMED', 'PURCHASED', 'SHIPPED', 'RECEIVED_IN_TURKEY', 'DELIVERED_TO_WAREHOUSE'].includes(trend.status)) {
+      } else if (
+        [
+          "PENDING",
+          "PROCESSING",
+          "CONFIRMED",
+          "PURCHASED",
+          "SHIPPED",
+          "RECEIVED_IN_TURKEY",
+          "DELIVERED_TO_WAREHOUSE",
+        ].includes(trend.status)
+      ) {
         monthData.processing = (monthData.processing || 0) + trend._count;
       }
 
@@ -130,24 +150,32 @@ export async function GET(req: Request) {
     const trendsData = Array.from(trendsByMonth.values());
 
     // Sonuçları düzenle
-    const formattedStats = status 
+    const formattedStats = status
       ? { [status]: ordersByStatus[0]?._count || 0 }
-      : ordersByStatus.reduce((acc, curr) => ({
-          ...acc,
-          [curr.status]: curr._count
-        }), {});
+      : ordersByStatus.reduce(
+          (acc, curr) => ({
+            ...acc,
+            [curr.status]: curr._count,
+          }),
+          {}
+        );
 
     return NextResponse.json({
       orders: {
         totalOrders: orders,
         byStatus: formattedStats,
-        trends: trendsData
+        trends: trendsData,
       },
       financial: {
         totalRevenue: Number(financialData._sum?.price) || 0,
         shippingCosts: {
           shippingPrice: Number(financialData._sum?.shippingPrice) || 0,
-          localShippingPrice: Number(financialData._sum?.localShippingPrice) || 0,
+          localShippingPrice:
+            Number(financialData._sum?.localShippingPrice) || 0,
+        },
+        iqdCosts: {
+          iqdPrice: Number(financialData._sum?.iqdPrice) || 0,
+          iqdShippingPrice: Number(financialData._sum?.iqdShippingPrice) || 0,
         },
       },
     });

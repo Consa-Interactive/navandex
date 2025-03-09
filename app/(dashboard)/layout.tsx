@@ -14,7 +14,11 @@ export default function DashboardLayout({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="relative min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div
+      className="relative min-h-screen bg-gray-50 dark:bg-gray-900"
+      suppressHydrationWarning
+      suppressContentEditableWarning
+    >
       <Toaster position="top-right" theme="dark" richColors closeButton />
 
       {/* Mobile menu button - Only show when menu is closed */}

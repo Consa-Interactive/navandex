@@ -122,8 +122,7 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
-
-      <div className="hidden lg:block">
+      <div className="">
         {/* Banner Carousel */}
         {isLoading ? (
           <BannerSkeleton />

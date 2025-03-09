@@ -98,37 +98,43 @@ export default function EditOrderModal({
   };
 
   const handleFileUpload = async (file: File) => {
-    console.log('=== Starting File Upload Process ===');
-    console.log('Original Image URL:', formData.imageUrl);
-    
+    console.log("=== Starting File Upload Process ===");
+    console.log("Original Image URL:", formData.imageUrl);
+
     try {
       setLoading(true);
-      
+
       // First, delete the old image if it exists and is from S3
-      if (formData.imageUrl && formData.imageUrl.includes('contabostorage.com')) {
-        console.log('Attempting to delete old image:', formData.imageUrl);
+      if (
+        formData.imageUrl &&
+        formData.imageUrl.includes("contabostorage.com")
+      ) {
+        console.log("Attempting to delete old image:", formData.imageUrl);
         try {
-          const deleteResponse = await fetch('/api/upload', {
-            method: 'DELETE',
+          const deleteResponse = await fetch("/api/upload", {
+            method: "DELETE",
             headers: {
-              'Content-Type': 'application/json'
+              "Content-Type": "application/json",
             },
-            body: JSON.stringify({ url: formData.imageUrl })
+            body: JSON.stringify({ url: formData.imageUrl }),
           });
-          
-          console.log('Delete response status:', deleteResponse.status);
+
+          console.log("Delete response status:", deleteResponse.status);
           if (!deleteResponse.ok) {
-            console.error('Failed to delete old image:', await deleteResponse.text());
+            console.error(
+              "Failed to delete old image:",
+              await deleteResponse.text()
+            );
           } else {
-            console.log('Old image deleted successfully');
+            console.log("Old image deleted successfully");
           }
         } catch (error) {
-          console.error('Error during image deletion:', error);
+          console.error("Error during image deletion:", error);
         }
       }
 
       // Then upload the new image
-      console.log('Starting new image upload');
+      console.log("Starting new image upload");
       const uploadFormData = new FormData();
       uploadFormData.append("file", file);
 
@@ -137,25 +143,25 @@ export default function EditOrderModal({
         body: uploadFormData,
       });
 
-      console.log('Upload response status:', uploadResponse.status);
-      
+      console.log("Upload response status:", uploadResponse.status);
+
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
-        console.error('Upload response error:', errorText);
+        console.error("Upload response error:", errorText);
         throw new Error("Failed to upload image");
       }
 
       const data = await uploadResponse.json();
-      console.log('New image URL:', data.url);
-      
+      console.log("New image URL:", data.url);
+
       // Update form data with new image URL
-      setFormData(prev => {
-        console.log('Updating form data with new image URL');
-        console.log('Previous imageUrl:', prev.imageUrl);
-        console.log('New imageUrl:', data.url);
+      setFormData((prev) => {
+        console.log("Updating form data with new image URL");
+        console.log("Previous imageUrl:", prev.imageUrl);
+        console.log("New imageUrl:", data.url);
         return {
           ...prev,
-          imageUrl: data.url
+          imageUrl: data.url,
         };
       });
     } catch (error) {
@@ -163,32 +169,35 @@ export default function EditOrderModal({
       setError("Failed to upload image");
     } finally {
       setLoading(false);
-      console.log('=== End File Upload Process ===');
-      console.log('Final form data imageUrl:', formData.imageUrl);
+      console.log("=== End File Upload Process ===");
+      console.log("Final form data imageUrl:", formData.imageUrl);
     }
   };
 
   const handleRemoveImage = async () => {
     try {
       setLoading(true);
-      
+
       // Delete the image from S3 if it's a Contabo storage URL
-      if (formData.imageUrl && formData.imageUrl.includes('contabostorage.com')) {
-        const deleteResponse = await fetch('/api/upload', {
-          method: 'DELETE',
+      if (
+        formData.imageUrl &&
+        formData.imageUrl.includes("contabostorage.com")
+      ) {
+        const deleteResponse = await fetch("/api/upload", {
+          method: "DELETE",
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify({ url: formData.imageUrl })
+          body: JSON.stringify({ url: formData.imageUrl }),
         });
-        
+
         if (!deleteResponse.ok) {
-          throw new Error('Failed to delete image');
+          throw new Error("Failed to delete image");
         }
       }
 
       // Clear the image URL from form data
-      setFormData(prev => ({ ...prev, imageUrl: "" }));
+      setFormData((prev) => ({ ...prev, imageUrl: "" }));
     } catch (error) {
       console.error("Error removing image:", error);
       setError("Failed to remove image");
@@ -206,17 +215,20 @@ export default function EditOrderModal({
     setFormData((prev) => ({
       ...prev,
       [name]:
-        name === "quantity" ? (value === "" ? "" : parseInt(value) || "") :
-        name === "price" || name === "shippingPrice" ? 
-          parseFloat(parseFloat(value).toFixed(2)) || 0 
-        : value,
+        name === "quantity"
+          ? value === ""
+            ? ""
+            : parseInt(value) || ""
+          : name === "price" || name === "shippingPrice"
+          ? parseFloat(parseFloat(value).toFixed(2)) || 0
+          : value,
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('=== Starting Form Submission ===');
-    console.log('Current form data:', formData);
+    console.log("=== Starting Form Submission ===");
+    console.log("Current form data:", formData);
     setLoading(true);
     setError("");
 
@@ -225,9 +237,10 @@ export default function EditOrderModal({
       if (!token) throw new Error("No authentication token found");
 
       // Convert quantity to number, default to 1 if empty or invalid
-      const quantityValue = typeof formData.quantity === 'string' && formData.quantity.trim() === "" 
-        ? 1 
-        : Number(formData.quantity) || 1;
+      const quantityValue =
+        typeof formData.quantity === "string" && formData.quantity.trim() === ""
+          ? 1
+          : Number(formData.quantity) || 1;
 
       const requestBody = {
         ...formData,
@@ -237,7 +250,7 @@ export default function EditOrderModal({
         shippingPrice: Number(formData.shippingPrice),
       };
 
-      console.log('Sending request with body:', requestBody);
+      console.log("Sending request with body:", requestBody);
 
       const response = await fetch(`/api/orders/${order.id}`, {
         method: "PUT",
@@ -248,19 +261,19 @@ export default function EditOrderModal({
         body: JSON.stringify(requestBody),
       });
 
-      console.log('Update response status:', response.status);
+      console.log("Update response status:", response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Update response error:', errorData);
+        console.error("Update response error:", errorData);
         throw new Error(errorData.error || "Failed to update order");
       }
 
       const updatedOrder = await response.json();
-      console.log('Updated order data:', updatedOrder);
-      
+      console.log("Updated order data:", updatedOrder);
+
       setShowSuccess(true);
-      
+
       // Show success animation and refresh orders
       setTimeout(() => {
         setShowSuccess(false);
@@ -272,14 +285,14 @@ export default function EditOrderModal({
       setError(err instanceof Error ? err.message : "Failed to update order");
     } finally {
       setLoading(false);
-      console.log('=== End Form Submission ===');
+      console.log("=== End Form Submission ===");
     }
   };
 
   // Add debug log for initial form data
   useEffect(() => {
-    console.log('=== Form Data Changed ===');
-    console.log('Current form data:', formData);
+    console.log("=== Form Data Changed ===");
+    console.log("Current form data:", formData);
   }, [formData]);
 
   if (!isOpen) return null;
@@ -312,7 +325,9 @@ export default function EditOrderModal({
         ) : (
           <>
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Edit Order #{order.id}</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Edit Order #{order.id}
+              </h2>
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
@@ -486,11 +501,18 @@ export default function EditOrderModal({
                       <option value="PROCESSING">Processing</option>
                       <option value="CONFIRMED">Confirmed</option>
                       <option value="PURCHASED">Purchased</option>
-                      <option value="RECEIVED_IN_TURKEY">Received in Turkey</option>
+                      <option value="RECEIVED_IN_TURKEY">
+                        Received in Turkey
+                      </option>
                       <option value="IN_TRANSIT">In Transit</option>
-                      <option value="DELIVERED_TO_WAREHOUSE">Arrived in Erbil</option>
+                      <option value="DELIVERED_TO_WAREHOUSE">
+                        Arrived in Erbil
+                      </option>
                       <option value="DELIVERED">Delivered</option>
                       <option value="CANCELLED">Cancelled</option>
+                      <option value="RETURNED">Returned</option>
+                      <option value="APPROVED">Approved</option>
+                      <option value="REJECTED">Rejected</option>
                     </select>
                   </div>
 
@@ -524,7 +546,9 @@ export default function EditOrderModal({
               </div>
 
               {error && (
-                <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+                <p className="text-sm text-red-500 dark:text-red-400">
+                  {error}
+                </p>
               )}
 
               <div className="flex justify-end gap-3">

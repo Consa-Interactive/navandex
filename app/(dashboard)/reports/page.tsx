@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Package, TrendingUp, Truck, XCircle } from "lucide-react";
+import {
+  BadgeDollarSign,
+  Package,
+  TrendingUp,
+  Truck,
+  XCircle,
+} from "lucide-react";
 import Cookies from "js-cookie";
 import { motion } from "framer-motion";
 import {
@@ -46,6 +52,10 @@ interface ReportData {
     shippingCosts: {
       shippingPrice: number;
       localShippingPrice: number;
+    };
+    iqdCosts: {
+      iqdPrice: number;
+      iqdShippingPrice: number;
     };
   };
 }
@@ -194,7 +204,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <StatCard
           title="Orders"
           value={reportData?.orders?.totalOrders || 0}
@@ -204,7 +214,9 @@ export default function ReportsPage() {
 
         <StatCard
           title="Total Revenue"
-          value={`$${reportData?.financial?.totalRevenue?.toFixed(2) || "0.00"}`}
+          value={`$${
+            reportData?.financial?.totalRevenue?.toFixed(2) || "0.00"
+          }`}
           icon={TrendingUp}
           gradient="bg-gradient-to-br from-blue-500 to-blue-700"
         />
@@ -229,6 +241,22 @@ export default function ReportsPage() {
           icon={Package}
           gradient="bg-gradient-to-br from-emerald-500 to-emerald-700"
         />
+
+        <StatCard
+          title="IQD Price"
+          value={`${reportData?.financial?.iqdCosts?.iqdPrice || "0.00"} IQD`}
+          icon={BadgeDollarSign}
+          gradient="bg-gradient-to-br from-emerald-500 to-emerald-700"
+        />
+
+        <StatCard
+          title="IQD Shipping"
+          value={`${
+            reportData?.financial?.iqdCosts?.iqdShippingPrice || "0.00"
+          } IQD`}
+          icon={BadgeDollarSign}
+          gradient="bg-gradient-to-br from-emerald-500 to-emerald-700"
+        />
       </div>
 
       {/* Status Distribution */}
@@ -238,19 +266,22 @@ export default function ReportsPage() {
             Order Status Distribution
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Object.entries(reportData.orders.byStatus).map(([status, count]) => (
-              <div
-                key={status}
-                className="rounded-xl border border-gray-200 p-4 dark:border-gray-700"
-              >
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {ORDER_STATUSES.find((s) => s.value === status)?.label || status}
+            {Object.entries(reportData.orders.byStatus).map(
+              ([status, count]) => (
+                <div
+                  key={status}
+                  className="rounded-xl border border-gray-200 p-4 dark:border-gray-700"
+                >
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {ORDER_STATUSES.find((s) => s.value === status)?.label ||
+                      status}
+                  </div>
+                  <div className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
+                    {count}
+                  </div>
                 </div>
-                <div className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
-                  {count}
-                </div>
-              </div>
-            ))}
+              )
+            )}
           </div>
         </div>
       )}
@@ -266,37 +297,45 @@ export default function ReportsPage() {
               data={reportData?.orders?.trends || []}
               margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
-              <XAxis 
-                dataKey="month" 
-                stroke="#6B7280"
-                fontSize={12}
-                tickLine={false}
-                axisLine={{ stroke: '#374151', opacity: 0.2 }}
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#374151"
+                opacity={0.1}
               />
-              <YAxis 
+              <XAxis
+                dataKey="month"
                 stroke="#6B7280"
                 fontSize={12}
                 tickLine={false}
-                axisLine={{ stroke: '#374151', opacity: 0.2 }}
+                axisLine={{ stroke: "#374151", opacity: 0.2 }}
+              />
+              <YAxis
+                stroke="#6B7280"
+                fontSize={12}
+                tickLine={false}
+                axisLine={{ stroke: "#374151", opacity: 0.2 }}
                 tickFormatter={(value) => Math.round(value).toString()}
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'rgba(17, 24, 39, 0.8)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: '#fff',
+                  backgroundColor: "rgba(17, 24, 39, 0.8)",
+                  border: "none",
+                  borderRadius: "8px",
+                  color: "#fff",
                 }}
-                cursor={{ fill: 'rgba(107, 114, 128, 0.1)' }}
-                labelStyle={{ color: '#fff', fontWeight: 'bold', marginBottom: '4px' }}
+                cursor={{ fill: "rgba(107, 114, 128, 0.1)" }}
+                labelStyle={{
+                  color: "#fff",
+                  fontWeight: "bold",
+                  marginBottom: "4px",
+                }}
               />
-              <Legend 
-                verticalAlign="top" 
+              <Legend
+                verticalAlign="top"
                 height={36}
                 iconType="circle"
                 formatter={(value) => (
-                  <span style={{ color: '#374151', fontSize: '12px' }}>
+                  <span style={{ color: "#374151", fontSize: "12px" }}>
                     {value}
                   </span>
                 )}
@@ -377,7 +416,11 @@ export default function ReportsPage() {
             </h2>
             <span className="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-700 dark:bg-red-900/20 dark:text-red-500">
               <XCircle className="mr-1.5 h-4 w-4" />
-              {MOCK_REJECTION_DATA.reduce((acc, curr) => acc + curr.count, 0)} Total
+              {MOCK_REJECTION_DATA.reduce(
+                (acc, curr) => acc + curr.count,
+                0
+              )}{" "}
+              Total
             </span>
           </div>
           <div className="mt-4 overflow-x-auto">
@@ -402,12 +445,16 @@ export default function ReportsPage() {
                       <div className="flex items-center">
                         <div
                           className="mr-2 h-3 w-3 rounded-full"
-                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                          style={{
+                            backgroundColor: COLORS[index % COLORS.length],
+                          }}
                         />
                         {item.reason}
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4">{item.count}</td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      {item.count}
+                    </td>
                     <td className="whitespace-nowrap px-6 py-4">
                       {(
                         (item.count /

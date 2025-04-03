@@ -35,7 +35,7 @@ export default function BannerSlider({ banners }: BannerSliderProps) {
   if (banners.length === 0) return null;
 
   return (
-    <div className="relative aspect-[5/1] w-full overflow-hidden rounded-2xl">
+    <div className="relative w-full h-auto min-h-[150px] md:min-h-[380px] lg:min-h-[680px] lg:mb-12 rounded-2xl overflow-hidden">
       {/* Navigation Buttons */}
       {banners.length > 1 && (
         <>
@@ -103,8 +103,12 @@ export default function BannerSlider({ banners }: BannerSliderProps) {
               <Image
                 src={banner.imageUrl}
                 alt={banner.title}
-                fill
-                className="object-cover"
+                layout="responsive"
+                width={1920}
+                height={1080}
+                style={{
+                  objectFit: "contain",
+                }}
                 priority={index === 0}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />

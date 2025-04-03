@@ -34,6 +34,7 @@ import {
   Wallet,
   PackageCheck,
   BadgeDollarSign,
+  Eye,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import AddOrderModal from "@/components/orders/AddOrderModal";
@@ -254,6 +255,7 @@ const ActionsCell = ({
   setSelectedOrderForPurchase: (order: Order) => void;
 }) => {
   const order = row.original;
+  const router = useRouter();
   const { user } = useApp();
   const isAdminOrWorker = user?.role === "ADMIN" || user?.role === "WORKER";
 
@@ -330,6 +332,13 @@ const ActionsCell = ({
             className="rounded-lg p-2 text-rose-600 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-900/20"
           >
             <BadgeDollarSign className="h-4 w-4" />
+          </button>
+
+          <button
+            onClick={() => router.push(`/orders/${order.id}`)}
+            className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-900/20"
+          >
+            <Eye className="h-4 w-4" />
           </button>
         </>
       )}
@@ -466,7 +475,7 @@ const MobileOrderCard = ({
 }) => {
   const { user } = useApp();
   const isAdminOrWorker = user?.role === "ADMIN" || user?.role === "WORKER";
-
+  const router = useRouter();
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
       {/* Card Header */}
@@ -687,6 +696,14 @@ const MobileOrderCard = ({
                 <PackageCheck className="h-4 w-4" />
                 Set IQD
               </button>
+
+              <button
+                onClick={() => router.push(`/orders/${order.id}`)}
+                className="flex items-center justify-center gap-2 p-3 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-900/20"
+              >
+                <Eye className="h-4 w-4" />
+                Show
+              </button>
             </>
           )}
         </div>
@@ -765,7 +782,7 @@ export default function OrdersPage() {
     useState<Order | null>(null);
   const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
 
-  const showSizes = [25, 50, 100, 200, 300, 500];
+  const showSizes = [25, 50, 100, 1200, 300, 500];
 
   // Get status and country from URL
   const activeStatus = searchParams.get("status")?.toUpperCase() || "ALL";
@@ -952,7 +969,7 @@ export default function OrdersPage() {
       cell: ({ row }) => {
         const order = row.original;
         return (
-          <div className="text-right tabular-nums">
+          <div className="text-right dark:text-white text-black tabular-nums">
             ${calculateTotalPrice(order)}
           </div>
         );
@@ -973,7 +990,7 @@ export default function OrdersPage() {
         return (
           <div className="flex items-center gap-2">
             <div
-              className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 ${
+              className={`inline-flex items-center gap-1.5 rounded-[10px] border-[1px] px-2.5 py-1.5 ${
                 statusColors[status as keyof typeof statusColors]?.bg
               } ${statusColors[status as keyof typeof statusColors]?.text}`}
             >

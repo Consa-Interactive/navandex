@@ -5,6 +5,7 @@ import Cookies from "js-cookie";
 import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { Package, FileText, Clock, User as UserIcon, Phone, MapPin, Calendar, DollarSign, ShoppingBag, AlertCircle } from 'lucide-react';
+import Image from 'next/image';
 
 type UserResponse = {
   id: number,
@@ -96,7 +97,7 @@ export default function UserViewPage() {
       }
       
       setUser(await _req.json());
-    } catch (error) {
+    } catch {
       toast.error("Failed to fetch user data");
     } finally {
       setIsLoading(false);
@@ -356,7 +357,7 @@ export default function UserViewPage() {
                       <div className="border-t">
                         <div className="p-4">
                           <div className="text-sm font-medium text-gray-500 mb-2">Product Image</div>
-                          <img src={order.imageUrl} alt="Product" className="w-full max-h-48 object-contain" />
+                          <Image src={order.imageUrl} alt="Product" className="w-full max-h-48 object-contain" />
                         </div>
                       </div>
                     )}

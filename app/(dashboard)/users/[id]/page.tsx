@@ -8,19 +8,21 @@ import { Package, FileText, Clock, User as UserIcon, Phone, MapPin, Calendar, Do
 import Image from 'next/image';
 
 type UserResponse = {
-  id: number,
-  phoneNumber: string,
-  name: string,
-  address: string,
-  city: string,
-  country: string,
-  role: string,
-  createdAt: string,
-  updatedAt: string,
-  isActive: boolean,
-  lastLogin: string,
-  Invoice: Invoice[],
-  orders: Order[]
+  user: {
+    id: number,
+    phoneNumber: string,
+    name: string,
+    address: string,
+    city: string,
+    country: string,
+    role: string,
+    createdAt: string,
+    updatedAt: string,
+    isActive: boolean,
+    lastLogin: string,
+    Invoice: Invoice[],
+    orders: Order[]
+  }
 }
 
 type Invoice = {
@@ -175,10 +177,10 @@ export default function UserViewPage() {
                 <UserIcon className="h-8 w-8" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">{user.name}</h1>
+                <h1 className="text-2xl font-bold">{user.user.name}</h1>
                 <div className="flex items-center mt-1 text-blue-100">
                   <Phone className="h-4 w-4 mr-1" />
-                  <span>{user.phoneNumber}</span>
+                  <span>{user.user.phoneNumber}</span>
                 </div>
               </div>
             </div>
@@ -187,33 +189,33 @@ export default function UserViewPage() {
                 <div className="text-xs text-blue-100">Member Since</div>
                 <div className="flex items-center">
                   <Calendar className="h-4 w-4 mr-1" />
-                  <span>{formatDate(user.createdAt).split(',')[0]}</span>
+                  <span>{formatDate(user.user.createdAt).split(',')[0]}</span>
                 </div>
               </div>
               <div className="bg-white/10 rounded-lg px-4 py-2">
                 <div className="text-xs text-blue-100">Account Type</div>
                 <div className="flex items-center">
                   <UserIcon className="h-4 w-4 mr-1" />
-                  <span className="capitalize">{user.role.toLowerCase()}</span>
+                  <span className="capitalize">{user.user.role.toLowerCase()}</span>
                 </div>
               </div>
               <div className="bg-white/10 rounded-lg px-4 py-2">
                 <div className="text-xs text-blue-100">Status</div>
                 <div className="flex items-center">
-                  <div className={`h-2 w-2 rounded-full mr-2 ${user.isActive ? 'bg-green-400' : 'bg-red-400'}`}></div>
-                  <span>{user.isActive ? 'Active' : 'Inactive'}</span>
+                  <div className={`h-2 w-2 rounded-full mr-2 ${user.user.isActive ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                  <span>{user.user.isActive ? 'Active' : 'Inactive'}</span>
                 </div>
               </div>
             </div>
           </div>
           
-          {user.address && (
+          {user.user.address && (
             <div className="mt-4 flex items-start">
               <MapPin className="h-4 w-4 mr-2 mt-0.5 text-blue-200" />
               <div className="text-blue-100">
-                {user.address}
-                {user.city && `, ${user.city}`}
-                {user.country && `, ${user.country}`}
+                {user.user.address}
+                {user.user.city && `, ${user.user.city}`}
+                {user.user.country && `, ${user.user.country}`}
               </div>
             </div>
           )}
@@ -263,11 +265,11 @@ export default function UserViewPage() {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-gray-800">Order History</h2>
               <div className="text-sm text-gray-500">
-                Total Orders: {user.orders?.length || 0}
+                Total Orders: {user.user.orders?.length || 0}
               </div>
             </div>
             
-            {!user.orders || user.orders.length === 0 ? (
+            {!user.user.orders || user.user.orders.length === 0 ? (
               <div className="bg-white rounded-lg shadow p-8 text-center">
                 <ShoppingBag className="mx-auto h-12 w-12 text-gray-300 mb-3" />
                 <h3 className="text-lg font-medium text-gray-800 mb-1">No Orders Yet</h3>
@@ -275,7 +277,7 @@ export default function UserViewPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-6">
-                {user.orders.map((order) => (
+                {user.user.orders.map((order) => (
                   <div key={order.id} className="bg-white rounded-lg shadow overflow-hidden">
                     <div className="p-5">
                       <div className="flex flex-col md:flex-row justify-between">
@@ -374,11 +376,11 @@ export default function UserViewPage() {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-gray-800">Invoice History</h2>
               <div className="text-sm text-gray-500">
-                Total Invoices: {user.Invoice?.length || 0}
+                Total Invoices: {user.user.Invoice?.length || 0}
               </div>
             </div>
             
-            {!user.Invoice || user.Invoice.length === 0 ? (
+            {!user.user.Invoice || user.user.Invoice.length === 0 ? (
               <div className="bg-white rounded-lg shadow p-8 text-center">
                 <FileText className="mx-auto h-12 w-12 text-gray-300 mb-3" />
                 <h3 className="text-lg font-medium text-gray-800 mb-1">No Invoices</h3>
@@ -386,7 +388,7 @@ export default function UserViewPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-6">
-                {user.Invoice.map((invoice) => (
+                {user.user.Invoice.map((invoice) => (
                   <div key={invoice.id} className="bg-white rounded-lg shadow overflow-hidden">
                     <div className="p-5">
                       <div className="flex flex-col md:flex-row justify-between">
@@ -452,7 +454,7 @@ export default function UserViewPage() {
                   <div>
                     <div className="font-medium">Last Login</div>
                     <div className="text-gray-500 text-sm">
-                      {user.lastLogin ? formatDate(user.lastLogin) : 'Never logged in'}
+                      {user.user.lastLogin ? formatDate(user.user.lastLogin) : 'Never logged in'}
                     </div>
                   </div>
                   <div className="bg-blue-50 p-2 rounded">
@@ -464,7 +466,7 @@ export default function UserViewPage() {
                   <div>
                     <div className="font-medium">Account Created</div>
                     <div className="text-gray-500 text-sm">
-                      {formatDate(user.createdAt)}
+                      {formatDate(user.user.createdAt)}
                     </div>
                   </div>
                   <div className="bg-green-50 p-2 rounded">
@@ -476,7 +478,7 @@ export default function UserViewPage() {
                   <div>
                     <div className="font-medium">Account Updated</div>
                     <div className="text-gray-500 text-sm">
-                      {formatDate(user.updatedAt)}
+                      {formatDate(user.user.updatedAt)}
                     </div>
                   </div>
                   <div className="bg-yellow-50 p-2 rounded">
@@ -490,8 +492,8 @@ export default function UserViewPage() {
                   <div>
                     <div className="font-medium">Recent Orders</div>
                     <div className="text-gray-500 text-sm">
-                      {user.orders?.length > 0 
-                        ? `Last order placed on ${formatDate(user.orders[0].createdAt)}`
+                      {user.user.orders?.length > 0 
+                        ? `Last order placed on ${formatDate(user.user.orders[0].createdAt)}`
                         : 'No orders yet'}
                     </div>
                   </div>
@@ -514,7 +516,7 @@ export default function UserViewPage() {
                         <Package className="h-5 w-5 text-blue-600" />
                       </div>
                     </div>
-                    <div className="text-2xl font-bold text-blue-900">{user.orders?.length || 0}</div>
+                    <div className="text-2xl font-bold text-blue-900">{user.user.orders?.length || 0}</div>
                   </div>
                   
                   <div className="bg-green-50 p-4 rounded-lg">
@@ -525,7 +527,7 @@ export default function UserViewPage() {
                       </div>
                     </div>
                     <div className="text-2xl font-bold text-green-900">
-                      ${user.orders?.reduce((total, order) => total + (order.price || 0) + (order.shippingPrice || 0), 0).toFixed(2) || '0.00'}
+                      ${user.user.orders?.reduce((total, order) => total + (order.price || 0) + (order.shippingPrice || 0), 0).toFixed(2) || '0.00'}
                     </div>
                   </div>
                   
@@ -537,7 +539,7 @@ export default function UserViewPage() {
                       </div>
                     </div>
                     <div className="text-2xl font-bold text-purple-900">
-                      {user.Invoice?.filter(inv => inv.status === 'PENDING').length || 0}
+                      {user.user.Invoice?.filter(inv => inv.status === 'PENDING').length || 0}
                     </div>
                   </div>
                 </div>

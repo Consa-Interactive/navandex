@@ -57,6 +57,7 @@ export async function PUT(request: NextRequest) {
     if (name !== undefined) updateData.name = name;
     // Prevent phone number updates
     if (decoded.role !== "ADMIN" && phoneNumber !== undefined) {
+
       return NextResponse.json(
         { error: "Phone number cannot be changed" },
         { status: 400 }
@@ -64,7 +65,7 @@ export async function PUT(request: NextRequest) {
     }
     // Only admin can update phone numbers
     if (decoded.role === "ADMIN" && phoneNumber !== undefined) {
-      updateData.phoneNumber = phoneNumber;
+      updateData.phoneNumber = `+964${phoneNumber}`;
     }
     if (role !== undefined) {
       // Validate role if provided
@@ -88,7 +89,7 @@ export async function PUT(request: NextRequest) {
     if (decoded.role === "ADMIN" && phoneNumber !== undefined) {
       const existingUser = await prisma.user.findFirst({
         where: {
-          phoneNumber,
+          phoneNumber: `+964${phoneNumber}`,
           id: { not: userId },
         },
       });
@@ -118,7 +119,7 @@ export async function PUT(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ user: updatedUser });
+    return NextResponse.json({ user: updatedUser, error: "" });
   } catch (error) {
     console.error("Error in PUT /api/users/[id]:", error);
     return NextResponse.json(

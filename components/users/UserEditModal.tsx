@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Cookies from "js-cookie";
+import { toast } from "sonner";
 
 interface UserEditModalProps {
   isOpen: boolean;
@@ -56,7 +57,7 @@ export default function UserEditModal({
   const [showSuccess, setShowSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string>("");
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -114,7 +115,7 @@ export default function UserEditModal({
     }
 
     setLoading(true);
-    setError(null);
+    setError("");
 
     if (formData.password && formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
@@ -137,6 +138,7 @@ export default function UserEditModal({
         body: JSON.stringify({
           name: `${formData.firstName} ${formData.lastName}`.trim(),
           role: formData.role,
+          phoneNumber: formData.phone,
           ...(formData.password && { password: formData.password }),
           address: formData.address,
           country: formData.country,
@@ -146,6 +148,7 @@ export default function UserEditModal({
 
       if (!response.ok) {
         const data = await response.json();
+        toast.error(data.error)
         throw new Error(data.error || "Failed to update user");
       }
 
@@ -155,6 +158,8 @@ export default function UserEditModal({
         await onUserUpdated();
         onClose();
       }, 2000);
+
+      setCurrentStep(1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update user");
     } finally {
@@ -242,8 +247,10 @@ export default function UserEditModal({
                 </span>
                 <input
                   type="text"
+                  name="phone"
+                  maxLength={10}
+                  onChange={handleInputChange}
                   value={formData.phone}
-                  disabled
                   className="w-full pl-16 pr-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
@@ -427,6 +434,7 @@ export default function UserEditModal({
               <AnimatePresence mode="wait" custom={direction}>
                 {renderStep()}
               </AnimatePresence>
+                
 
               {error && (
                 <p className="mt-4 text-sm text-red-500 dark:text-red-400">

@@ -277,12 +277,6 @@ const ActionsCell = ({
           >
             <CheckCircle className="h-4 w-4" />
           </button>
-          <button
-            onClick={() => setSelectedOrderForAction(order)}
-            className="rounded-lg p-2 text-red-600 hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-900/20"
-          >
-            <XCircle className="h-4 w-4" />
-          </button>
         </>
       )}
 
@@ -630,14 +624,7 @@ const MobileOrderCard = ({
                 className="flex items-center justify-center gap-2 p-3 text-sm font-medium text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
               >
                 <CheckCircle className="h-4 w-4" />
-                Confirm
-              </button>
-              <button
-                onClick={onAction}
-                className="flex items-center justify-center gap-2 p-3 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-              >
-                <XCircle className="h-4 w-4" />
-                Reject
+                Set Status
               </button>
             </>
           )}

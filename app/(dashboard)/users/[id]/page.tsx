@@ -108,7 +108,7 @@ export default function UserViewPage() {
 
   useEffect(() => {
     fetchUserData();
-  });
+  }, []);
 
   const getStatusColor = (status: Status): string => {
     const statusColors: Record<Status, string> = {

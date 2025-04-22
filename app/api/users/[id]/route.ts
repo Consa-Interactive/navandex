@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json({user: getUser})
 
-  }catch (err) {
+  }catch {
     return NextResponse.json({error: "Internal server error", status: 500})
   }
 }

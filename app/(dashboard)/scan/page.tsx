@@ -131,23 +131,36 @@ export default function ScanPage() {
     fetchOrderStats();
   }, [firstCustomerId]);
 
+  useEffect(() => {
+    if (!barcode.trim()) return;
+
+    const delay = setTimeout(() => {
+      const form = document.getElementById("barcodeForm") as HTMLFormElement;
+      if (form) {
+        form.requestSubmit(); // Otomatik submit
+      }
+    }, 200);
+
+    return () => clearTimeout(delay);
+  }, [barcode]);
+
   // Validate barcode format
   const validateBarcode = (code: string): { isValid: boolean; cleanedCode: string } => {
     if (!code.trim()) return { isValid: false, cleanedCode: "" };
-    
+
     // Extract only numbers from the barcode
     const cleanedCode = code.replace(/[^0-9]/g, "");
-    
+
     if (cleanedCode.length === 0) {
       toast.error("Invalid order ID format - no numbers found");
       return { isValid: false, cleanedCode: "" };
     }
-    
+
     if (cleanedCode.length > 10) {
       toast.error("Invalid order ID length");
       return { isValid: false, cleanedCode: "" };
     }
-    
+
     return { isValid: true, cleanedCode };
   };
 
@@ -281,10 +294,10 @@ export default function ScanPage() {
       }
 
       const data = await response.json();
-      
+
       // Open invoice in new tab
       window.open(`/invoices/${data.id}`, "_blank");
-      
+
       toast.success("Invoice generated successfully!");
     } catch (error) {
       console.error("Error generating invoice:", error);
@@ -315,11 +328,11 @@ export default function ScanPage() {
       );
 
       await Promise.all(updatePromises);
-      
+
       // Clear scanned orders after successful update
       setScannedOrders([]);
       setFirstCustomerId(null);
-      
+
       toast.success("Orders marked as Arrived in Erbil");
     } catch (error) {
       console.error("Error updating orders:", error);
@@ -350,11 +363,11 @@ export default function ScanPage() {
       );
 
       await Promise.all(updatePromises);
-      
+
       // Clear scanned orders after successful update
       setScannedOrders([]);
       setFirstCustomerId(null);
-      
+
       toast.success("Orders marked as Delivered");
     } catch (error) {
       console.error("Error updating orders:", error);
@@ -413,7 +426,11 @@ export default function ScanPage() {
               )}
             </div>
 
-            <form onSubmit={handleBarcodeSubmit} className="space-y-4">
+            <form
+              id="barcodeForm"
+              onSubmit={handleBarcodeSubmit}
+              className="space-y-4"
+            >
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <input
@@ -483,7 +500,7 @@ export default function ScanPage() {
 
         {/* Sağ Panel - İstatistikler */}
         <div>
-          
+
           {/* Order Statistics */}
           <div className="h-full rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
             <div className="flex flex-col h-[calc(100%-2rem)]">
@@ -513,14 +530,14 @@ export default function ScanPage() {
           <div className="flex items-center justify-between">
             <div>
 
-                {firstCustomerId && scannedOrders.length > 0 && (
-                 <div>
-                      <h3 className="font-extrabold text-gray-900 dark:text-white">
-                        {scannedOrders[0].user.name}
-                      </h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {scannedOrders[0].user.phoneNumber}
-                      </p>
+              {firstCustomerId && scannedOrders.length > 0 && (
+                <div>
+                  <h3 className="font-extrabold text-gray-900 dark:text-white">
+                    {scannedOrders[0].user.name}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {scannedOrders[0].user.phoneNumber}
+                  </p>
                 </div>
               )}
 

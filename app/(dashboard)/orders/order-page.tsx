@@ -30,7 +30,6 @@ import {
   Tag,
   ShoppingCart,
   Pencil,
-  XCircle,
   Wallet,
   PackageCheck,
   BadgeDollarSign,

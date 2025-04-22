@@ -16,7 +16,7 @@ export default function ExchangeRatesPage() {
   const [rates, setRates] = useState<ExchangeRate[]>([]);
   const [loading, setLoading] = useState(true);
   const [newRate, setNewRate] = useState("");
-  const [country, setCountry] = useState<string | null>(null);
+  const [country, setCountry] = useState<string>("NULL");
 
   useEffect(() => {
     fetchRates();
@@ -48,6 +48,12 @@ export default function ExchangeRatesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      if(country.length == 0 || !country || country == "NULL") {
+        toast.error("Please select an country");
+        return;
+      } 
+
+
       const token = Cookies.get("token");
       const response = await fetch("/api/exchange-rates", {
         method: "POST",
@@ -64,7 +70,7 @@ export default function ExchangeRatesPage() {
 
       toast.success("Exchange rate added successfully");
       setNewRate("");
-      setCountry(null);
+      setCountry("");
       fetchRates();
     } catch (error) {
       console.error("Error creating rate:", error);
@@ -110,10 +116,12 @@ export default function ExchangeRatesPage() {
             <div className="relative">
               <select
                 name="status"
-                value={country ?? "TURKEY"}
+                defaultValue={"NULL"}
+                value={country}
                 onChange={(e) => setCountry(e.target.value)}
                 className="w-full px-4 py-2.5 h-12 text-sm rounded-xl bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary outline-none"
               >
+                <option value="NULL">Select county</option>
                 <option value="TURKEY">Turkey</option>
                 <option value="USA">United States</option>
                 <option value="UAE">Emarat</option>

@@ -21,6 +21,7 @@ import {
   Plus,
   MoreVertical,
   X,
+  Eye,
 } from "lucide-react";
 import Image from "next/image";
 import UserEditModal from "@/components/users/UserEditModal";
@@ -277,7 +278,7 @@ export default function UsersPage() {
     columnHelper.display({
       id: "actions",
       cell: ({ row }) => (
-        <div className="relative">
+        <div className="flex flex-row items-center justify-center">
           <div
             onClick={(e) => {
               e.stopPropagation();
@@ -287,6 +288,14 @@ export default function UsersPage() {
           >
             <MoreVertical className="h-5 w-5 text-gray-500" />
           </div>
+
+            <div className="rounded-xl p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+            
+              onClick={() => router.push(`/users/${row.original.id}`)}
+            >
+              <Eye className="h-5 w-5 text-gray-500" />
+            </div>
+
         </div>
       ),
     }),

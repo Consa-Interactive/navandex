@@ -5,6 +5,65 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+
+export async function GET(request: NextRequest) {
+  try {
+    const id = request.nextUrl.pathname.split("/").pop();
+    const userId = parseInt(id || "");
+    if (isNaN(userId)) {
+      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+    }
+
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "No token provided" }, { status: 401 });
+    }
+
+    const token = authHeader.split(" ")[1];
+    if (!process.env.JWT_SECRET) {
+      return NextResponse.json(
+        { error: "JWT secret not configured" },
+        { status: 500 }
+      );
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET) as {
+        sub: string;
+        role: string;
+      };
+    } catch {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    if (
+      !decoded ||
+      !decoded.sub ||
+      (decoded.role !== "ADMIN" &&
+        decoded.role !== "WORKER" &&
+        parseInt(decoded.sub) !== userId)
+    ) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    const getUser = await prisma.user.findUnique({
+      where: {
+        id: userId
+      },
+      include: {
+        Invoice: true,
+        orders: true,
+      }
+    })
+    
+    return NextResponse.json({user: getUser})
+
+  }catch (err) {
+    return NextResponse.json({error: "Internal server error", status: 500})
+  }
+}
+
 export async function PUT(request: NextRequest) {
   try {
     // Get user ID from URL
@@ -121,7 +180,6 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ user: updatedUser, error: "" });
   } catch (error) {
-    console.error("Error in PUT /api/users/[id]:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

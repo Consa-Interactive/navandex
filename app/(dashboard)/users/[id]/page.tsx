@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import Cookies from "js-cookie";
 import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { Package, FileText, Clock, User as UserIcon, Phone, MapPin, Calendar, DollarSign, TruckIcon, ShoppingBag, AlertCircle } from 'lucide-react';
+import { Package, FileText, Clock, User as UserIcon, Phone, MapPin, Calendar, DollarSign, ShoppingBag, AlertCircle } from 'lucide-react';
 
 type UserResponse = {
   id: number,

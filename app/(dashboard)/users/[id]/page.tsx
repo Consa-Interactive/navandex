@@ -169,7 +169,7 @@ export default function UserViewPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-6 py-10">
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-10">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -228,7 +228,7 @@ export default function UserViewPage() {
           <div className="flex overflow-x-auto">
             <button 
               onClick={() => setActiveTab('orders')}
-              className={`px-6 py-4 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${activeTab === 'orders' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              className={`px-6 py-4 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${activeTab === 'orders' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-800 hover:text-gray-700'}`}
             >
               <div className="flex items-center">
                 <Package className="h-4 w-4 mr-2" />
@@ -237,7 +237,7 @@ export default function UserViewPage() {
             </button>
             <button 
               onClick={() => setActiveTab('invoices')}
-              className={`px-6 py-4 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${activeTab === 'invoices' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              className={`px-6 py-4 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${activeTab === 'invoices' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-800 hover:text-gray-700'}`}
             >
               <div className="flex items-center">
                 <FileText className="h-4 w-4 mr-2" />
@@ -246,7 +246,7 @@ export default function UserViewPage() {
             </button>
             <button 
               onClick={() => setActiveTab('activity')}
-              className={`px-6 py-4 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${activeTab === 'activity' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              className={`px-6 py-4 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${activeTab === 'activity' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-800 hover:text-gray-700'}`}
             >
               <div className="flex items-center">
                 <Clock className="h-4 w-4 mr-2" />
@@ -264,7 +264,7 @@ export default function UserViewPage() {
           <div>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-gray-800">Order History</h2>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-slate-800">
                 Total Orders: {user.user.orders?.length || 0}
               </div>
             </div>
@@ -290,10 +290,10 @@ export default function UserViewPage() {
                               {order.status.replace(/_/g, ' ')}
                             </span>
                           </div>
-                          <div className="text-gray-500 text-sm">
+                          <div className="text-slate-800 text-sm">
                             Order Number: {order.orderNumber || `ORD-${order.id}`}
                           </div>
-                          <div className="text-gray-500 text-sm">
+                          <div className="text-slate-800 text-sm">
                             Placed on {formatDate(order.createdAt)}
                           </div>
                         </div>
@@ -301,7 +301,7 @@ export default function UserViewPage() {
                           <div className="text-lg font-bold text-gray-900">
                             ${order.price.toFixed(2)}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-slate-800">
                             + ${order.shippingPrice.toFixed(2)} shipping
                           </div>
                         </div>
@@ -309,28 +309,28 @@ export default function UserViewPage() {
                       
                       <div className="mt-4 grid md:grid-cols-3 gap-4">
                         <div className="bg-gray-50 p-3 rounded">
-                          <div className="text-xs text-gray-500 uppercase mb-1">Quantity</div>
-                          <div className="font-medium">{order.quantity}</div>
+                          <div className="text-xs text-slate-800 uppercase mb-1">Quantity</div>
+                          <div className="font-medium text-orange-600">{order.quantity}</div>
                         </div>
                         
                         {order.country && (
                           <div className="bg-gray-50 p-3 rounded">
-                            <div className="text-xs text-gray-500 uppercase mb-1">Country</div>
-                            <div className="font-medium">{order.country}</div>
+                            <div className="text-xs text-slate-800 uppercase mb-1">Country</div>
+                            <div className="font-medium text-orange-600">{order.country}</div>
                           </div>
                         )}
                         
                         {order.size && (
                           <div className="bg-gray-50 p-3 rounded">
-                            <div className="text-xs text-gray-500 uppercase mb-1">Size</div>
-                            <div className="font-medium">{order.size}</div>
+                            <div className="text-xs text-slate-800 uppercase mb-1">Size</div>
+                            <div className="font-medium text-orange-600">{order.size}</div>
                           </div>
                         )}
                         
                         {order.color && (
                           <div className="bg-gray-50 p-3 rounded">
-                            <div className="text-xs text-gray-500 uppercase mb-1">Color</div>
-                            <div className="font-medium">{order.color}</div>
+                            <div className="text-xs text-slate-800 uppercase mb-1">Color</div>
+                            <div className="font-medium text-orange-600">{order.color}</div>
                           </div>
                         )}
                       </div>
@@ -358,8 +358,8 @@ export default function UserViewPage() {
                     {order.imageUrl && (
                       <div className="border-t">
                         <div className="p-4">
-                          <div className="text-sm font-medium text-gray-500 mb-2">Product Image</div>
-                          <Image src={order.imageUrl} alt="Product" className="w-full max-h-48 object-contain" />
+                          <div className="text-sm font-medium text-slate-800 mb-2">Product Image</div>
+                          <Image width={100} height={100} src={order.imageUrl} alt="Product" className="w-full max-h-48 object-contain" />
                         </div>
                       </div>
                     )}
@@ -375,7 +375,7 @@ export default function UserViewPage() {
           <div>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-gray-800">Invoice History</h2>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-slate-800">
                 Total Invoices: {user.user.Invoice?.length || 0}
               </div>
             </div>
@@ -401,10 +401,10 @@ export default function UserViewPage() {
                               {invoice.status}
                             </span>
                           </div>
-                          <div className="text-gray-500 text-sm">
+                          <div className="text-slate-800 text-sm">
                             Created on {formatDate(invoice.date)}
                           </div>
-                          <div className="text-gray-500 text-sm">
+                          <div className="text-slate-800 text-sm">
                             Due {formatDate(invoice.dueDate)}
                           </div>
                         </div>
@@ -413,7 +413,7 @@ export default function UserViewPage() {
                             ${invoice.total.toFixed(2)}
                           </div>
                           {invoice.paymentMethod && (
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-slate-800">
                               via {invoice.paymentMethod}
                             </div>
                           )}
@@ -452,8 +452,8 @@ export default function UserViewPage() {
               <div className="p-5">
                 <div className="flex items-center justify-between border-b pb-4 mb-4">
                   <div>
-                    <div className="font-medium">Last Login</div>
-                    <div className="text-gray-500 text-sm">
+                    <div className="font-medium text-orange-600">Last Login</div>
+                    <div className="text-slate-800 text-sm">
                       {user.user.lastLogin ? formatDate(user.user.lastLogin) : 'Never logged in'}
                     </div>
                   </div>
@@ -464,8 +464,8 @@ export default function UserViewPage() {
                 
                 <div className="flex items-center justify-between border-b pb-4 mb-4">
                   <div>
-                    <div className="font-medium">Account Created</div>
-                    <div className="text-gray-500 text-sm">
+                    <div className="font-medium text-orange-600">Account Created</div>
+                    <div className="text-slate-800 text-sm">
                       {formatDate(user.user.createdAt)}
                     </div>
                   </div>
@@ -476,8 +476,8 @@ export default function UserViewPage() {
                 
                 <div className="flex items-center justify-between border-b pb-4 mb-4">
                   <div>
-                    <div className="font-medium">Account Updated</div>
-                    <div className="text-gray-500 text-sm">
+                    <div className="font-medium text-orange-600">Account Updated</div>
+                    <div className="text-slate-800 text-sm">
                       {formatDate(user.user.updatedAt)}
                     </div>
                   </div>
@@ -490,8 +490,8 @@ export default function UserViewPage() {
                 
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-medium">Recent Orders</div>
-                    <div className="text-gray-500 text-sm">
+                    <div className="font-medium text-orange-600">Recent Orders</div>
+                    <div className="text-slate-800 text-sm">
                       {user.user.orders?.length > 0 
                         ? `Last order placed on ${formatDate(user.user.orders[0].createdAt)}`
                         : 'No orders yet'}

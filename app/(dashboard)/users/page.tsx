@@ -289,13 +289,12 @@ export default function UsersPage() {
             <MoreVertical className="h-5 w-5 text-gray-500" />
           </div>
 
-            <div className="rounded-xl p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-            
-              onClick={() => router.push(`/users/${row.original.id}`)}
-            >
-              <Eye className="h-5 w-5 text-gray-500" />
-            </div>
-
+          <div
+            className="rounded-xl p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+            onClick={() => router.push(`/users/${row.original.id}`)}
+          >
+            <Eye className="h-5 w-5 text-gray-500" />
+          </div>
         </div>
       ),
     }),
@@ -368,12 +367,26 @@ export default function UsersPage() {
               </div>
             </div>
           </div>
-          <button
-            onClick={() => setSelectedUser(user)}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            <MoreVertical className="h-5 w-5 text-gray-500" />
-          </button>
+
+          <div className="flex items-center ">
+            <div className="self-center relative">
+              <button
+                onClick={() => setSelectedUser(user)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <MoreVertical className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="self-center relative">
+              <button
+                onClick={() => router.push(`/users/${user.id}`)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <Eye className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="mt-4 space-y-2">
@@ -510,7 +523,9 @@ export default function UsersPage() {
 
           {/* Mobile View */}
           <div className="lg:hidden space-y-4">
-            {data.map((user) => <UserCard key={user.id} user={user} />)}
+            {data.map((user) => (
+              <UserCard key={user.id} user={user} />
+            ))}
           </div>
 
           {/* Pagination Controls */}
@@ -554,7 +569,9 @@ export default function UsersPage() {
                 <ChevronRight className="h-4 w-4" />
               </button>
               <button
-                onClick={() => handlePageChange(Math.ceil(totalUsers / pageSize) - 1)}
+                onClick={() =>
+                  handlePageChange(Math.ceil(totalUsers / pageSize) - 1)
+                }
                 disabled={pageIndex >= Math.ceil(totalUsers / pageSize) - 1}
                 className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-700 disabled:opacity-50"
               >

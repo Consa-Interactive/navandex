@@ -26,4 +26,6 @@ export const STATUS_FILTERS = [
   { value: "RETURNED", label: "Returned", color: "orange" },
   { value: "RECEIVED_IN_TURKEY", label: "Received in Turkey", color: "indigo" },
   { value: "DELIVERED_TO_WAREHOUSE", label: "Delivered to Warehouse", color: "purple" },
+  { value: "APPROVED", label: "Approved", color: "green"},
+  { value: "REJECTED", label: "Rejected", color: "green"},
 ] as const; 
